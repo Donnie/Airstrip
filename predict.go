@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"regexp"
 	"strconv"
@@ -20,7 +19,6 @@ func (gl *Global) handlePredict(m *tb.Message) {
 	json.Unmarshal(dat, account)
 
 	date := m.Payload
-	fmt.Println(date)
 	matched, _ := regexp.Match(`^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}`, []byte(date))
 	if !matched {
 		date = "Dec 2030"

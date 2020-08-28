@@ -1,15 +1,16 @@
-module github.com/Donnie/Runway
+module github.com/Donnie/Airstrip
 
 go 1.14
 
 require (
-	github.com/Donnie/Airstrip v0.0.0-20200801141438-b4bafd6fc33a // indirect
-	github.com/gin-gonic/gin v1.6.3
-	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/joho/godotenv v1.3.0
-	github.com/pkg/errors v0.9.1
-	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
-	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
-	golang.org/x/tools v0.0.0-20200729041821-df70183b1872 // indirect
+	github.com/kr/pretty v0.2.1 // indirect
+	github.com/mattn/go-sqlite3 v1.14.2
+	github.com/pkg/errors v0.9.1 // indirect
+	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/tucnak/telebot.v2 v2.3.3
+	gopkg.in/yaml.v2 v2.2.8 // indirect
+	gorm.io/driver/sqlite v1.1.0
+	gorm.io/gorm v1.9.19
 )
