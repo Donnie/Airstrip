@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
+	"fmt"
 	"regexp"
-	"strconv"
 	"time"
 
 	tb "gopkg.in/tucnak/telebot.v2"
@@ -12,10 +10,6 @@ import (
 
 func (gl *Global) handlePredict(m *tb.Message) {
 	var layout = "Jan 2006"
-	dat, err := ioutil.ReadFile(gl.File)
-	check(err)
-	account := &Account{}
-	json.Unmarshal(dat, account)
 
 	date := m.Payload
 	matched, _ := regexp.Match(`^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}`, []byte(date))
@@ -24,33 +18,42 @@ func (gl *Global) handlePredict(m *tb.Message) {
 	}
 	t, _ := time.Parse(layout, date)
 
-	output := strconv.Itoa(int(predictFuture(t, *account, false)))
+	vars := []Variable{}
+	gl.Orm.Find(&vars)
+
+	fixs := []Fixed{}
+	gl.Orm.Find(&fixs)
+
+	output := fmt.Sprintf("%d", predictFuture(t, vars, fixs, false)/100)
 	gl.Bot.Send(m.Sender, output)
 }
 
-func predictFuture(future time.Time, account Account, start bool) (cash int32) {
-	for _, trans := range account.Savings {
-		cash = cash + trans.Amount
+func predictFuture(future time.Time, vars []Variable, fixs []Fixed, start bool) (cash int64) {
+	for _, trans := range vars {
+		if *trans.Form == "gain" {
+			cash += *trans.Amount
+		}
 	}
 
 	reps := monthDiff(time.Now(), future)
 	if start {
 		reps--
 	}
-	carry := calcMonthEnd(account)
+	carry := calcMonthEnd(fixs)
 
-	cash = cash + (int32(reps) * carry)
+	cash += (int64(reps) * carry)
 	return
 }
 
-func calcMonthEnd(account Account) (cash int32) {
-	for _, trans := range account.Earnings {
-		cash = cash + trans.Amount
+func calcMonthEnd(fixs []Fixed) (cash int64) {
+	for _, trans := range fixs {
+		if *trans.Form == "income" {
+			cash += *trans.Amount
+		}
+		if *trans.Form == "charge" {
+			cash -= *trans.Amount
+		}
 	}
-	for _, trans := range account.Costs {
-		cash = cash - trans.Amount
-	}
-
 	return
 }
 
@@ -67,7 +70,7 @@ func monthDiff(a, b time.Time) (month int) {
 	month = int(m2 - m1)
 	year := int(y2 - y1)
 
-	month = month + (year * 12)
+	month += (year * 12)
 
 	return
 }

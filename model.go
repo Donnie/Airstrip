@@ -9,9 +9,8 @@ import (
 
 // Global holds fundamental items
 type Global struct {
-	Bot  *tb.Bot
-	File string
-	Orm  *gorm.DB
+	Bot *tb.Bot
+	Orm *gorm.DB
 }
 
 // Variable represents one variable cost

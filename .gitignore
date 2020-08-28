@@ -2,3 +2,4 @@ db
 .env.local
 .env
 *.db
+.goreload

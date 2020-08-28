@@ -49,16 +49,15 @@ func main() {
 		return
 	}
 
-	db, err := gorm.Open(sqlite.Open("./airstrip.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(filename), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
 	db.AutoMigrate(&Variable{}, &Fixed{})
 
 	gl := Global{
-		File: filename,
-		Bot:  b,
-		Orm:  db,
+		Bot: b,
+		Orm: db,
 	}
 
 	b.Handle("/start", func(m *tb.Message) {
@@ -67,6 +66,7 @@ func main() {
 
 	b.Handle("/charge", gl.handleCharge)
 	b.Handle("/expense", gl.handleExpense)
+	b.Handle("/gain", gl.handleGain)
 	b.Handle("/income", gl.handleIncome)
 	b.Handle("/lend", gl.handleLend)
 	b.Handle("/loan", gl.handleLoan)
