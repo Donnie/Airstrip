@@ -10,9 +10,8 @@ import (
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
-var layout = "Jan 2006"
-
 func (gl *Global) handlePredict(m *tb.Message) {
+	var layout = "Jan 2006"
 	dat, err := ioutil.ReadFile(gl.File)
 	check(err)
 	account := &Account{}

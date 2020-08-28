@@ -7,9 +7,12 @@ import (
 )
 
 func (gl *Global) handleShow(m *tb.Message) {
-	items := []Item{}
-	gl.Orm.Find(&items)
+	variables := []Variable{}
+	gl.Orm.Find(&variables)
+	fixeds := []Fixed{}
+	gl.Orm.Find(&fixeds)
 
-	j, _ := json.Marshal(items)
-	gl.Bot.Send(m.Sender, "`"+string(j)+"`", tb.ModeMarkdown)
+	v, _ := json.Marshal(variables)
+	f, _ := json.Marshal(fixeds)
+	gl.Bot.Send(m.Sender, "`"+string(v)+string(f)+"`", tb.ModeMarkdown)
 }

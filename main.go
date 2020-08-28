@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	_ "github.com/mattn/go-sqlite3"
 	tb "gopkg.in/tucnak/telebot.v2"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -54,7 +53,7 @@ func main() {
 	if err != nil {
 		panic("failed to connect database")
 	}
-	db.AutoMigrate(&Item{})
+	db.AutoMigrate(&Variable{}, &Fixed{})
 
 	gl := Global{
 		File: filename,
@@ -66,11 +65,13 @@ func main() {
 		b.Send(m.Sender, fmt.Sprintf("Hello %s!", m.Sender.FirstName))
 	})
 
+	b.Handle("/charge", gl.handleCharge)
 	b.Handle("/expense", gl.handleExpense)
-
-	b.Handle("/show", gl.handleShow)
-
+	b.Handle("/income", gl.handleIncome)
+	b.Handle("/lend", gl.handleLend)
+	b.Handle("/loan", gl.handleLoan)
 	b.Handle("/predict", gl.handlePredict)
+	b.Handle("/show", gl.handleShow)
 
 	b.Start()
 }
