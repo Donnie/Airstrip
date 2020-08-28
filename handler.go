@@ -1,35 +1,26 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"regexp"
 	"strconv"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tb "gopkg.in/tucnak/telebot.v2"
 )
 
 var layout = "Jan 2006"
 
-func (glob *Global) handleHook(c *gin.Context) {
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(c.Request.Body)
-	str := buf.String()
-
-	dat, err := ioutil.ReadFile(glob.File)
+func (gl *Global) handlePredict(m *tb.Message) {
+	dat, err := ioutil.ReadFile(gl.File)
 	check(err)
 	account := &Account{}
 	json.Unmarshal(dat, account)
 
-	var input Input
-
-	err = json.Unmarshal([]byte(str), &input)
-	check(err)
-
-	date := *input.Message.Text
+	date := m.Payload
+	fmt.Println(date)
 	matched, _ := regexp.Match(`^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}`, []byte(date))
 	if !matched {
 		date = "Dec 2030"
@@ -37,10 +28,7 @@ func (glob *Global) handleHook(c *gin.Context) {
 	t, _ := time.Parse(layout, date)
 
 	output := strconv.Itoa(int(predictFuture(t, *account, false)))
-
-	glob.sendMessage(*input.Message.Chat.ID, output, input.Message.MessageID)
-
-	c.JSON(200, nil)
+	gl.Bot.Send(m.Sender, output)
 }
 
 func predictFuture(future time.Time, account Account, start bool) (cash int32) {
@@ -85,15 +73,4 @@ func monthDiff(a, b time.Time) (month int) {
 	month = month + (year * 12)
 
 	return
-}
-
-func (glob *Global) sendMessage(chatID int64, text string, messageID *int64) {
-	msg := tgbotapi.NewMessage(chatID, text)
-	msg.ParseMode = "Markdown"
-	msg.DisableWebPagePreview = true
-
-	if messageID != nil {
-		msg.ReplyToMessageID = int(*messageID)
-	}
-	glob.Bot.Send(msg)
 }

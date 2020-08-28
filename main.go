@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
+	"time"
 
-	"github.com/gin-gonic/gin"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/joho/godotenv"
+	tb "gopkg.in/tucnak/telebot.v2"
 )
 
 func check(e error) {
@@ -38,21 +37,26 @@ func main() {
 		os.Exit(1)
 	}
 
-	bot, err := tgbotapi.NewBotAPI(teleToken)
-	if err != nil {
-		log.Panic(err)
-	}
-	bot.Debug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
-
-	global := Global{
-		Bot:  bot,
-		File: filename,
-	}
-
-	r := gin.Default()
-	r.POST("/hook", global.handleHook)
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, nil)
+	b, err := tb.NewBot(tb.Settings{
+		Token:  teleToken,
+		Poller: &tb.LongPoller{Timeout: 10 * time.Second},
 	})
-	r.Run()
+
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	gl := Global{
+		File: filename,
+		Bot:  b,
+	}
+
+	b.Handle("/start", func(m *tb.Message) {
+		b.Send(m.Sender, fmt.Sprintf("Hello %s!", m.Sender.FirstName))
+	})
+
+	b.Handle("/predict", gl.handlePredict)
+
+	b.Start()
 }

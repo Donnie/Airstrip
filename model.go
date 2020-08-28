@@ -1,12 +1,10 @@
 package main
 
-import (
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-)
+import tb "gopkg.in/tucnak/telebot.v2"
 
 // Global holds fundamental items
 type Global struct {
-	Bot  *tgbotapi.BotAPI
+	Bot  *tb.Bot
 	File string
 }
 
