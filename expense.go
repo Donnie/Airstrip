@@ -12,7 +12,7 @@ func (gl *Global) handleExpense(m *tb.Message) {
 	layout := "2006-01-02 15:04"
 	form := "expense"
 	var name, amount, currency, description, date string
-	payload := strings.Split(m.Payload, "  ")
+	payload := strings.Split(m.Payload, ". ")
 	switch len(payload) {
 	case 2:
 		name = payload[0]
