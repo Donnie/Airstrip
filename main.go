@@ -66,6 +66,8 @@ func main() {
 		b.Send(m.Sender, fmt.Sprintf("Hello %s!", m.Sender.FirstName))
 	})
 
+	b.Handle("/expense", gl.handleExpense)
+
 	b.Handle("/show", gl.handleShow)
 
 	b.Handle("/predict", gl.handlePredict)
