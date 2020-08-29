@@ -94,9 +94,9 @@ func (gl *Global) handleContext(m *tb.Message) {
 		dateTime, err := time.Parse(layout, date)
 		if err == nil {
 			dateTime = dateTime.AddDate(0, 1, -1)
+			context.TillDate = &dateTime
+			gl.Orm.Save(&context)
 		}
-		context.TillDate = &dateTime
-		gl.Orm.Save(&context)
 		if *context.Form == "lend" {
 			context.Form = ptr.String("expense")
 			gl.Orm.Create(&context)

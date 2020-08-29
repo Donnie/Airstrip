@@ -16,7 +16,10 @@ func (gl *Global) handleShow(m *tb.Message) {
 
 	recs := []Record{}
 	gl.Orm.
-		Where("(DATE(?) BETWEEN DATE(from_date) AND DATE(till_date))", time.Now()).
+		Where(
+			gl.Orm.Where("(?::date BETWEEN from_date AND till_date)", time.Now()).
+				Or("(?::date >= from_date AND till_date IS NULL)", time.Now()),
+		).
 		Or(
 			gl.Orm.Where("EXTRACT(MONTH FROM date) = ?", int(t.Month())).
 				Where("EXTRACT(YEAR FROM date) = ?", t.Year()),
