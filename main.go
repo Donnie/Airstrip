@@ -8,7 +8,7 @@ import (
 
 	"github.com/joho/godotenv"
 	tb "gopkg.in/tucnak/telebot.v2"
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -34,12 +34,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	filename, exists := os.LookupEnv("DBFILE")
-	if !exists {
-		fmt.Println("Add DBFILE to .env file")
-		os.Exit(1)
-	}
-
 	b, err := tb.NewBot(tb.Settings{
 		Token:  teleToken,
 		Poller: &tb.LongPoller{Timeout: 10 * time.Second},
@@ -49,7 +43,8 @@ func main() {
 		return
 	}
 
-	db, err := gorm.Open(sqlite.Open(filename), &gorm.Config{})
+	dsn := "user=airstrip password=postgres dbname=airstrip port=5432 sslmode=disable host=airstrip-db"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
