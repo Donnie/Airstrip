@@ -11,6 +11,8 @@ services:
         volumes:
             - ./:/build
     postgres:
+        container_name: airstrip_db
+        hostname: postgres
         environment: 
             - POSTGRES_USER=airstrip
             - POSTGRES_DB=airstrip

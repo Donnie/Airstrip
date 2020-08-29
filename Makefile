@@ -13,6 +13,9 @@ up:
 sql:
 	docker-compose run -e PGPASSWORD=postgres postgres psql --host=postgres --username=airstrip --dbname=airstrip
 
+dump:
+	docker exec -e PGPASSWORD=postgres airstrip_db pg_dump --host=postgres --username=airstrip airstrip > airstrip.sql
+
 clean:
 	@echo "Cleaning Docker environment..."
 	docker-compose stop
