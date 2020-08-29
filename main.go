@@ -53,7 +53,7 @@ func main() {
 	if err != nil {
 		panic("failed to connect database")
 	}
-	db.AutoMigrate(&Variable{}, &Fixed{})
+	db.AutoMigrate(&Record{}, &Convo{})
 
 	gl := Global{
 		Bot: b,
@@ -64,14 +64,16 @@ func main() {
 		b.Send(m.Sender, fmt.Sprintf("Hello %s!", m.Sender.FirstName))
 	})
 
-	b.Handle("/charge", gl.handleCharge)
-	b.Handle("/expense", gl.handleExpense)
-	b.Handle("/gain", gl.handleGain)
-	b.Handle("/income", gl.handleIncome)
-	b.Handle("/lend", gl.handleLend)
-	b.Handle("/loan", gl.handleLoan)
+	b.Handle("/charge", gl.handleRecord)
+	b.Handle("/expense", gl.handleRecord)
+	b.Handle("/gain", gl.handleRecord)
+	b.Handle("/income", gl.handleRecord)
+	b.Handle("/lend", gl.handleRecord)
+	b.Handle("/loan", gl.handleRecord)
 	b.Handle("/predict", gl.handlePredict)
 	b.Handle("/show", gl.handleShow)
+
+	b.Handle(tb.OnText, gl.handleContext)
 
 	b.Start()
 }

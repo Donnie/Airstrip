@@ -10,6 +10,7 @@ import (
 
 func (gl *Global) handlePredict(m *tb.Message) {
 	var layout = "Jan 2006"
+	userID := int64(m.Sender.ID)
 
 	date := m.Payload
 	matched, _ := regexp.Match(`^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}`, []byte(date))
@@ -18,18 +19,17 @@ func (gl *Global) handlePredict(m *tb.Message) {
 	}
 	t, _ := time.Parse(layout, date)
 
-	vars := []Variable{}
-	gl.Orm.Find(&vars)
+	recs := []Record{}
+	gl.Orm.
+		Where("user_id = ?", userID).
+		Find(&recs)
 
-	fixs := []Fixed{}
-	gl.Orm.Find(&fixs)
-
-	output := fmt.Sprintf("%d", predictFuture(t, vars, fixs, false)/100)
+	output := fmt.Sprintf("%d", predictFuture(t, recs, false)/100)
 	gl.Bot.Send(m.Sender, output)
 }
 
-func predictFuture(future time.Time, vars []Variable, fixs []Fixed, start bool) (cash int64) {
-	for _, trans := range vars {
+func predictFuture(future time.Time, recs []Record, start bool) (cash int64) {
+	for _, trans := range recs {
 		if *trans.Form == "gain" {
 			cash += *trans.Amount
 		}
@@ -39,14 +39,14 @@ func predictFuture(future time.Time, vars []Variable, fixs []Fixed, start bool) 
 	if start {
 		reps--
 	}
-	carry := calcMonthEnd(fixs)
+	carry := calcMonthEnd(recs)
 
 	cash += (int64(reps) * carry)
 	return
 }
 
-func calcMonthEnd(fixs []Fixed) (cash int64) {
-	for _, trans := range fixs {
+func calcMonthEnd(recs []Record) (cash int64) {
+	for _, trans := range recs {
 		if *trans.Form == "income" {
 			cash += *trans.Amount
 		}

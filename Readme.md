@@ -6,3 +6,13 @@ After setting up ngrok on 8080, you need to [setWebhook](https://core.telegram.o
 ### Start Project
 Add your Telegram bot token to the .env file and then
 ```go run .```
+
+
+/earn
+/pay
+
+/save
+/cost
+
+/loan
+/lend

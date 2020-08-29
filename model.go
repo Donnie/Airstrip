@@ -13,35 +13,34 @@ type Global struct {
 	Orm *gorm.DB
 }
 
-// Variable represents one variable cost
-type Variable struct {
+// Record represents one Record
+type Record struct {
 	ID        *int64     `json:"id" gorm:"primaryKey"`
 	CreatedAt *time.Time `json:"created_at"`
 	UpdatedAt *time.Time `json:"updated_at"`
 	DeletedAt *time.Time `json:"-"`
 
+	Account     *string    `json:"account"`
 	Amount      *int64     `json:"amount"`
 	Currency    *string    `json:"currency"`
 	Date        *time.Time `json:"date"`
 	Description *string    `json:"description"`
 	Form        *string    `json:"form"`
-	Name        *string    `json:"name"`
+	FromDate    *time.Time `json:"from_date"`
+	TillDate    *time.Time `json:"till_date"`
+	Type        *string    `json:"type"`
+	UserID      *int64     `json:"user_id"`
 }
 
-// Fixed represents fixed costs
-type Fixed struct {
+// Convo stores a conversation context
+type Convo struct {
 	ID        *int64     `json:"id" gorm:"primaryKey"`
 	CreatedAt *time.Time `json:"created_at"`
 	UpdatedAt *time.Time `json:"updated_at"`
 	DeletedAt *time.Time `json:"-"`
 
-	Amount      *int64     `json:"amount"`
-	Currency    *string    `json:"currency"`
-	Description *string    `json:"description"`
-	Form        *string    `json:"form"`
-	FromDate    *time.Time `json:"fromdate"`
-	Name        *string    `json:"name"`
-	TillDate    *time.Time `json:"tilldate"`
+	UserID  *int64  `json:"user_id"`
+	Context *string `json:"context"`
 }
 
 // Trans defines a money transaction
