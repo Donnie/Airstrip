@@ -7,8 +7,6 @@ ENV GO111MODULE=on \
     GOOS=linux \
     GOARCH=amd64
 
-RUN go get -u github.com/acoshift/goreload
-
 # Move to working directory /build
 WORKDIR /build
 
@@ -39,8 +37,6 @@ FROM scratch
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /dist/main /
-
-EXPOSE 8080
 
 # Command to run the executable
 ENTRYPOINT ["/main"]

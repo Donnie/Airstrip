@@ -43,7 +43,7 @@ func main() {
 		return
 	}
 
-	dsn := "user=airstrip password=postgres dbname=airstrip port=5432 sslmode=disable host=airstrip-db"
+	dsn := "user=airstrip password=postgres dbname=airstrip port=5432 sslmode=disable host=postgres"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
