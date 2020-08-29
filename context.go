@@ -91,9 +91,19 @@ func (gl *Global) handleContext(m *tb.Message) {
 	} else if context.TillDate == nil && *context.Type == "fixed" {
 		date := m.Text
 		layout := "Jan 2006"
-		dateTime, _ := time.Parse(layout, date)
+		dateTime, err := time.Parse(layout, date)
+		if err == nil {
+			dateTime = dateTime.AddDate(0, 1, -1)
+		}
 		context.TillDate = &dateTime
 		gl.Orm.Save(&context)
+		if *context.Form == "lend" {
+			context.Form = ptr.String("expense")
+			gl.Orm.Create(&context)
+		} else if *context.Form == "loan" {
+			context.Form = ptr.String("gain")
+			gl.Orm.Create(&context)
+		}
 		gl.Orm.Delete(&convo)
 	}
 

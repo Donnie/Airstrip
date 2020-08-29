@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"regexp"
 	"time"
 
 	tb "gopkg.in/tucnak/telebot.v2"
@@ -13,45 +12,52 @@ func (gl *Global) handlePredict(m *tb.Message) {
 	userID := int64(m.Sender.ID)
 
 	date := m.Payload
-	matched, _ := regexp.Match(`^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}`, []byte(date))
-	if !matched {
-		date = "Dec 2030"
+	t, err := time.Parse(layout, date)
+	if err != nil {
+		t = time.Now().AddDate(1, 0, 0)
+	} else {
+		t = t.AddDate(0, 1, -1)
 	}
-	t, _ := time.Parse(layout, date)
 
 	recs := []Record{}
 	gl.Orm.
 		Where("user_id = ?", userID).
 		Find(&recs)
 
-	output := fmt.Sprintf("%d", predictFuture(t, recs, false)/100)
+	output := fmt.Sprintf("%d", predictFuture(t, recs)/100)
 	gl.Bot.Send(m.Sender, output)
 }
 
-func predictFuture(future time.Time, recs []Record, start bool) (cash int64) {
-	for _, trans := range recs {
-		if *trans.Form == "gain" {
-			cash += *trans.Amount
+func predictFuture(future time.Time, recs []Record) (cash int64) {
+	for _, rec := range recs {
+		switch *rec.Form {
+		case "gain", "lend":
+			cash += *rec.Amount
+		case "expense", "loan":
+			cash -= *rec.Amount
 		}
 	}
 
-	reps := monthDiff(time.Now(), future)
-	if start {
-		reps--
-	}
-	carry := calcMonthEnd(recs)
+	timeStr := fmt.Sprintf("%d%d", time.Now().Year(), time.Now().Month())
+	timeNow, _ := time.Parse("20061", timeStr)
+	timeNow = timeNow.AddDate(0, 1, 0)
 
-	cash += (int64(reps) * carry)
+	reps := monthDiff(timeNow, future)
+	for i := 0; i < reps; i++ {
+		cash += calcMonthEnd(recs, timeNow.AddDate(0, i, 0))
+	}
 	return
 }
 
-func calcMonthEnd(recs []Record) (cash int64) {
-	for _, trans := range recs {
-		if *trans.Form == "income" {
-			cash += *trans.Amount
-		}
-		if *trans.Form == "charge" {
-			cash -= *trans.Amount
+func calcMonthEnd(recs []Record, month time.Time) (cash int64) {
+	for _, rec := range recs {
+		if month.Unix() >= rec.FromDate.Unix() && month.Unix() <= rec.TillDate.Unix() {
+			switch *rec.Form {
+			case "income":
+				cash += *rec.Amount
+			case "charge":
+				cash -= *rec.Amount
+			}
 		}
 	}
 	return
@@ -67,7 +73,7 @@ func monthDiff(a, b time.Time) (month int) {
 	y1, m1, _ := a.Date()
 	y2, m2, _ := b.Date()
 
-	month = int(m2 - m1)
+	month = int(m2 - m1 + 1)
 	year := int(y2 - y1)
 
 	month += (year * 12)
