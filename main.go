@@ -54,18 +54,16 @@ func main() {
 		Orm: db,
 	}
 
-	b.Handle("/start", func(m *tb.Message) {
-		b.Send(m.Sender, fmt.Sprintf("Hello %s!", m.Sender.FirstName))
-	})
-
+	b.Handle("/start", gl.handleHelp)
 	b.Handle("/charge", gl.handleRecord)
 	b.Handle("/expense", gl.handleRecord)
 	b.Handle("/gain", gl.handleRecord)
+	b.Handle("/help", gl.handleHelp)
 	b.Handle("/income", gl.handleRecord)
 	b.Handle("/lend", gl.handleRecord)
 	b.Handle("/loan", gl.handleRecord)
 	b.Handle("/predict", gl.handlePredict)
-	b.Handle("/show", gl.handleShow)
+	b.Handle("/view", gl.handleView)
 
 	b.Handle(tb.OnText, gl.handleContext)
 

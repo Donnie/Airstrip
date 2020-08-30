@@ -20,7 +20,7 @@ func (gl *Global) handleContext(m *tb.Message) {
 		Last(convo)
 
 	if res.Error != nil {
-		gl.Bot.Send(m.Sender, res.Error)
+		gl.Bot.Send(m.Sender, "Sorry didn't get you! /help")
 		return
 	}
 

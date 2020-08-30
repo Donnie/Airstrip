@@ -24,8 +24,8 @@ func (gl *Global) handlePredict(m *tb.Message) {
 		Where("user_id = ?", userID).
 		Find(&recs)
 
-	output := fmt.Sprintf("%d", predictFuture(t, recs)/100)
-	gl.Bot.Send(m.Sender, output)
+	output := fmt.Sprintf("*Prediction* for month end %s:\n%d EUR", t.Format(layout), predictFuture(t, recs))
+	gl.Bot.Send(m.Sender, output, tb.ModeMarkdown)
 }
 
 func predictFuture(future time.Time, recs []Record) (cash int64) {
@@ -46,12 +46,17 @@ func predictFuture(future time.Time, recs []Record) (cash int64) {
 	for i := 0; i < reps; i++ {
 		cash += calcMonthEnd(recs, timeNow.AddDate(0, i, 0))
 	}
+	cash = cash / 100
 	return
 }
 
 func calcMonthEnd(recs []Record, month time.Time) (cash int64) {
 	for _, rec := range recs {
-		if month.Unix() >= rec.FromDate.Unix() && month.Unix() <= rec.TillDate.Unix() {
+		if (*rec.Form == "income" ||
+			*rec.Form == "charge") &&
+			(month.Unix() >= rec.FromDate.Unix() &&
+				(rec.TillDate == nil ||
+					month.Unix() <= rec.TillDate.Unix())) {
 			switch *rec.Form {
 			case "income":
 				cash += *rec.Amount
