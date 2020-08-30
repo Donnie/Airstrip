@@ -48,7 +48,6 @@ func main() {
 	if err != nil {
 		panic("failed to connect database")
 	}
-	db.AutoMigrate(&Record{}, &Convo{})
 
 	gl := Global{
 		Bot: b,
