@@ -26,13 +26,14 @@ func (gl *Global) handleView(m *tb.Message) {
 		).
 		Find(&recs)
 
-	expenses := []string{}
-	gains := []string{}
-	loans := []string{}
-	lends := []string{}
-	incomes := []string{}
-	charges := []string{}
 	output := fmt.Sprintf("*Overview of %s*\n", t.Format(layout))
+	output += prepareView(recs)
+
+	gl.Bot.Send(m.Sender, output, tb.ModeMarkdown)
+}
+
+func prepareView(recs []Record) (output string) {
+	var expenses, gains, loans, lends, incomes, charges []string
 
 	for _, rec := range recs {
 		switch *rec.Form {
@@ -81,5 +82,5 @@ func (gl *Global) handleView(m *tb.Message) {
 		output += item
 	}
 
-	gl.Bot.Send(m.Sender, output, tb.ModeMarkdown)
+	return
 }

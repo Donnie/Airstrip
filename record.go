@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"regexp"
 
 	"github.com/Donnie/Airstrip/ptr"
@@ -31,13 +30,12 @@ func (gl *Global) handleRecord(m *tb.Message) {
 	gl.Orm.Create(&item)
 
 	// Create new conversation with Context
-	context, _ := json.Marshal(item)
 	gl.Orm.Create(&Convo{
-		Context: ptr.String(string(context)),
-		Expect:  ptr.String("account"),
-		UserID:  &userID,
+		ContextID: item.ID,
+		Expect:    ptr.String("account"),
+		UserID:    &userID,
 	})
 
-	question := genQues("account", form)
+	question := genQues("account")
 	gl.Bot.Send(m.Sender, question)
 }

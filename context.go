@@ -19,10 +19,10 @@ func (gl *Global) handleContext(m *tb.Message) {
 		return
 	}
 
-	que := convo.expectWhat(gl, m.Text)
+	que := convo.expectNext(gl, m.Text)
 	gl.Bot.Send(m.Sender, que)
 }
 
-func genQues(ask, form string) string {
-	return fmt.Sprintf("What is the %s of the %s?", ask, form)
+func genQues(ask string) string {
+	return fmt.Sprintf("What is the %s?", ask)
 }

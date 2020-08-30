@@ -1,4 +1,6 @@
 # Airstrip
+[![Go Report Card](https://goreportcard.com/badge/github.com/Donnie/Airstrip)](https://goreportcard.com/report/github.com/Donnie/Airstrip) [![Build Status](https://api.travis-ci.org/Donnie/Airstrip.svg?branch=master&status=passed)](https://travis-ci.org/github/Donnie/Airstrip) [![Maintainability](https://api.codeclimate.com/v1/badges/80f939bc59e3affb38ff/maintainability)](https://codeclimate.com/github/Donnie/Airstrip/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/80f939bc59e3affb38ff/test_coverage)](https://codeclimate.com/github/Donnie/Airstrip/test_coverage)
+
 Personal finance management bot on Telegram
 
 ## Dev Setup

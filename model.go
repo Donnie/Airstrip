@@ -39,9 +39,9 @@ type Convo struct {
 	UpdatedAt *time.Time `json:"updated_at"`
 	DeletedAt *time.Time `json:"-"`
 
-	UserID  *int64  `json:"user_id"`
-	Expect  *string `json:"expect"`
-	Context *string `json:"context"`
+	UserID    *int64  `json:"user_id"`
+	Expect    *string `json:"expect"`
+	ContextID *int64  `json:"context_id"`
 }
 
 // Trans defines a money transaction

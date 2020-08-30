@@ -1,104 +1,112 @@
 package main
 
 import (
-	"encoding/json"
 	"strconv"
 	"time"
 
 	"github.com/Donnie/Airstrip/ptr"
 )
 
-func (convo *Convo) expectWhat(gl *Global, expect string) (out string) {
-	context := &Record{}
-	json.Unmarshal([]byte(*convo.Context), &context)
-
+func (convo *Convo) expectNext(gl *Global, expect string) (out string) {
 	switch *convo.Expect {
 	case "account":
-		context.Account = &expect
-		gl.Orm.Save(&context)
-
-		cont, _ := json.Marshal(context)
-		convo.Context = ptr.String(string(cont))
-		convo.Expect = ptr.String("amount")
-		gl.Orm.Save(&convo)
+		convo.expectAccount(gl, expect)
 	case "amount":
-		amountFlt, err := strconv.ParseFloat(expect, 64)
-		if err != nil {
-			break
-		}
-		context.Amount = ptr.Int64(int64(amountFlt * 100))
-		gl.Orm.Save(&context)
-		cont, _ := json.Marshal(context)
-		convo.Context = ptr.String(string(cont))
-		convo.Expect = ptr.String("currency")
-		gl.Orm.Save(&convo)
+		convo.expectAmount(gl, expect)
 	case "currency":
-		currency := expect
-		if len(currency) != 3 {
-			currency = "EUR"
-		}
-		context.Currency = &currency
-		gl.Orm.Save(&context)
-		cont, _ := json.Marshal(context)
-		convo.Context = ptr.String(string(cont))
-		convo.Expect = ptr.String("description")
-		gl.Orm.Save(&convo)
+		convo.expectCurrency(gl, expect)
 	case "description":
-		context.Description = &expect
-		gl.Orm.Save(&context)
-		cont, _ := json.Marshal(context)
-		convo.Context = ptr.String(string(cont))
-		if *context.Type == "variable" {
-			convo.Expect = ptr.String("date")
-		} else {
-			convo.Expect = ptr.String("from date")
-		}
-		gl.Orm.Save(&convo)
+		convo.expectDescription(gl, expect)
 	case "date":
-		date := expect
-		layout := "2006-01-02 15:04"
-		dateTime, err := time.Parse(layout, date)
-		if err != nil {
-			dateTime = time.Now()
-		}
-		context.Date = &dateTime
-		gl.Orm.Save(&context)
-		convo.Expect = nil
-		gl.Orm.Delete(&convo)
+		convo.expectDate(gl, expect)
 	case "from date":
-		date := expect
-		layout := "Jan 2006"
-		dateTime, _ := time.Parse(layout, date)
-		context.FromDate = &dateTime
-		gl.Orm.Save(&context)
-		cont, _ := json.Marshal(context)
-		convo.Context = ptr.String(string(cont))
-		convo.Expect = ptr.String("till date")
-		gl.Orm.Save(&convo)
+		convo.expectFromDate(gl, expect)
 	case "till date":
-		date := expect
-		layout := "Jan 2006"
-		dateTime, err := time.Parse(layout, date)
-		if err == nil {
-			dateTime = dateTime.AddDate(0, 1, -1)
-			context.TillDate = &dateTime
-			gl.Orm.Save(&context)
-		}
-		if *context.Form == "lend" {
-			context.Form = ptr.String("expense")
-			gl.Orm.Create(&context)
-		} else if *context.Form == "loan" {
-			context.Form = ptr.String("gain")
-			gl.Orm.Create(&context)
-		}
-		convo.Expect = nil
-		gl.Orm.Delete(&convo)
+		convo.expectTillDate(gl, expect)
 	}
 
 	if convo.Expect != nil {
-		out = genQues(*convo.Expect, *context.Form)
+		out = genQues(*convo.Expect)
+		gl.Orm.Save(&convo)
 	} else {
 		out = "Record stored!"
+		gl.Orm.Delete(&convo)
 	}
 	return
+}
+
+func (convo *Convo) expectAccount(gl *Global, input string) {
+	gl.Orm.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("account", input)
+	convo.Expect = ptr.String("amount")
+}
+
+func (convo *Convo) expectAmount(gl *Global, input string) {
+	amountFlt, err := strconv.ParseFloat(input, 64)
+	if err != nil {
+		return
+	}
+	gl.Orm.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("amount", ptr.Int64(int64(amountFlt*100)))
+	convo.Expect = ptr.String("currency")
+}
+
+func (convo *Convo) expectCurrency(gl *Global, input string) {
+	currency := input
+	if len(currency) != 3 {
+		currency = "EUR"
+	}
+	gl.Orm.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("currency", currency)
+	convo.Expect = ptr.String("description")
+}
+
+func (convo *Convo) expectDescription(gl *Global, input string) {
+	record := &Record{}
+	gl.Orm.First(&record, *convo.ContextID)
+	record.Description = &input
+	gl.Orm.Save(&record)
+	if *record.Type == "variable" {
+		convo.Expect = ptr.String("date")
+	} else {
+		convo.Expect = ptr.String("from date")
+	}
+}
+
+func (convo *Convo) expectDate(gl *Global, input string) {
+	date := input
+	layout := "2006-01-02 15:04"
+	dateTime, err := time.Parse(layout, date)
+	if err != nil {
+		dateTime = time.Now()
+	}
+	gl.Orm.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("date", dateTime)
+	convo.Expect = nil
+}
+
+func (convo *Convo) expectFromDate(gl *Global, input string) {
+	date := input
+	layout := "Jan 2006"
+	dateTime, _ := time.Parse(layout, date)
+	gl.Orm.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("from_date", dateTime)
+	convo.Expect = ptr.String("till date")
+}
+
+func (convo *Convo) expectTillDate(gl *Global, input string) {
+	record := &Record{}
+	gl.Orm.First(&record, *convo.ContextID)
+	date := input
+	layout := "Jan 2006"
+	dateTime, err := time.Parse(layout, date)
+	if err == nil {
+		dateTime = dateTime.AddDate(0, 1, -1)
+		record.TillDate = &dateTime
+		gl.Orm.Save(&record)
+	}
+	record.ID = nil
+	if *record.Form == "lend" {
+		record.Form = ptr.String("expense")
+		gl.Orm.Create(&record)
+	} else if *record.Form == "loan" {
+		record.Form = ptr.String("gain")
+		gl.Orm.Create(&record)
+	}
+	convo.Expect = nil
 }
