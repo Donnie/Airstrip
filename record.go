@@ -9,19 +9,20 @@ import (
 )
 
 func (gl *Global) handleRecord(m *tb.Message) {
-	var typ string
 	userID := int64(m.Sender.ID)
-	r, _ := regexp.Compile(`\/(\w+)`)
 
+	// end last conversation
+	gl.Orm.Where("user_id = ?", userID).Delete(&Convo{})
+
+	// find what is this conversation about
+	r, _ := regexp.Compile(`\/(\w+)`)
 	form := r.FindString(m.Text)[1:]
+	typ := "variable"
 	if form == "income" || form == "charge" {
 		typ = "fixed"
-	} else {
-		typ = "variable"
 	}
 
-	question := genQues("account", form)
-
+	// Init empty record
 	item := &Record{
 		Form:   &form,
 		UserID: &userID,
@@ -29,12 +30,14 @@ func (gl *Global) handleRecord(m *tb.Message) {
 	}
 	gl.Orm.Create(&item)
 
-	gl.Orm.Where("user_id = ?", userID).Delete(&Convo{})
-
-	cont, _ := json.Marshal(item)
+	// Create new conversation with Context
+	context, _ := json.Marshal(item)
 	gl.Orm.Create(&Convo{
-		Context: ptr.String(string(cont)),
+		Context: ptr.String(string(context)),
+		Expect:  ptr.String("account"),
 		UserID:  &userID,
 	})
+
+	question := genQues("account", form)
 	gl.Bot.Send(m.Sender, question)
 }

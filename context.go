@@ -27,17 +27,20 @@ func (gl *Global) handleContext(m *tb.Message) {
 	context := &Record{}
 	json.Unmarshal([]byte(*convo.Context), &context)
 
-	if context.Account == nil {
-		context.Account = &m.Text
+	switch *convo.Expect {
+	case "account":
 		ask = "amount"
+		context.Account = &m.Text
 		gl.Orm.Save(&context)
+
 		cont, _ := json.Marshal(context)
 		convo.Context = ptr.String(string(cont))
+		convo.Expect = &ask
 		gl.Orm.Save(&convo)
-	} else if context.Amount == nil {
+	case "amount":
 		amountFlt, err := strconv.ParseFloat(m.Text, 64)
 		if err != nil {
-			gl.Bot.Send(m.Sender, "amount could not be parsed")
+			gl.Bot.Send(m.Sender, "Please try again")
 			return
 		}
 		context.Amount = ptr.Int64(int64(amountFlt * 100))
@@ -45,10 +48,11 @@ func (gl *Global) handleContext(m *tb.Message) {
 		gl.Orm.Save(&context)
 		cont, _ := json.Marshal(context)
 		convo.Context = ptr.String(string(cont))
+		convo.Expect = &ask
 		gl.Orm.Save(&convo)
-	} else if context.Currency == nil {
+	case "currency":
 		currency := m.Text
-		if currency == "" || currency == "." {
+		if len(currency) != 3 {
 			currency = "EUR"
 		}
 		context.Currency = &currency
@@ -56,8 +60,9 @@ func (gl *Global) handleContext(m *tb.Message) {
 		gl.Orm.Save(&context)
 		cont, _ := json.Marshal(context)
 		convo.Context = ptr.String(string(cont))
+		convo.Expect = &ask
 		gl.Orm.Save(&convo)
-	} else if context.Description == nil {
+	case "description":
 		context.Description = &m.Text
 		if *context.Type == "variable" {
 			ask = "date"
@@ -67,8 +72,9 @@ func (gl *Global) handleContext(m *tb.Message) {
 		gl.Orm.Save(&context)
 		cont, _ := json.Marshal(context)
 		convo.Context = ptr.String(string(cont))
+		convo.Expect = &ask
 		gl.Orm.Save(&convo)
-	} else if context.Date == nil && *context.Type == "variable" {
+	case "date":
 		date := m.Text
 		layout := "2006-01-02 15:04"
 		dateTime, err := time.Parse(layout, date)
@@ -78,7 +84,7 @@ func (gl *Global) handleContext(m *tb.Message) {
 		context.Date = &dateTime
 		gl.Orm.Save(&context)
 		gl.Orm.Delete(&convo)
-	} else if context.FromDate == nil && *context.Type == "fixed" {
+	case "from date":
 		date := m.Text
 		layout := "Jan 2006"
 		dateTime, _ := time.Parse(layout, date)
@@ -87,8 +93,9 @@ func (gl *Global) handleContext(m *tb.Message) {
 		gl.Orm.Save(&context)
 		cont, _ := json.Marshal(context)
 		convo.Context = ptr.String(string(cont))
+		convo.Expect = &ask
 		gl.Orm.Save(&convo)
-	} else if context.TillDate == nil && *context.Type == "fixed" {
+	case "till date":
 		date := m.Text
 		layout := "Jan 2006"
 		dateTime, err := time.Parse(layout, date)
@@ -115,7 +122,6 @@ func (gl *Global) handleContext(m *tb.Message) {
 	}
 }
 
-func genQues(ask, form string) (out string) {
-	out = fmt.Sprintf("What is the %s of the %s?", ask, form)
-	return
+func genQues(ask, form string) string {
+	return fmt.Sprintf("What is the %s of the %s?", ask, form)
 }

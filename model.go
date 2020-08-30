@@ -40,6 +40,7 @@ type Convo struct {
 	DeletedAt *time.Time `json:"-"`
 
 	UserID  *int64  `json:"user_id"`
+	Expect  *string `json:"expect"`
 	Context *string `json:"context"`
 }
 
