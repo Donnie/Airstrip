@@ -32,6 +32,9 @@ type Record struct {
 	UserID      *int64     `json:"user_id"`
 }
 
+// Expector is a function which expects a contextual response
+type Expector func(*Global, string)
+
 // Convo stores a conversation context
 type Convo struct {
 	ID        *int64     `json:"id" gorm:"primaryKey"`
@@ -39,9 +42,10 @@ type Convo struct {
 	UpdatedAt *time.Time `json:"updated_at"`
 	DeletedAt *time.Time `json:"-"`
 
-	UserID    *int64  `json:"user_id"`
-	Expect    *string `json:"expect"`
-	ContextID *int64  `json:"context_id"`
+	UserID    *int64              `json:"user_id"`
+	Expect    *string             `json:"expect"`
+	ContextID *int64              `json:"context_id"`
+	handlers  map[string]Expector `gorm:"-"`
 }
 
 // Trans defines a money transaction

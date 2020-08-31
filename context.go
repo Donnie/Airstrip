@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
@@ -15,14 +13,18 @@ func (gl *Global) handleContext(m *tb.Message) {
 		Last(convo)
 
 	if res.Error != nil {
-		gl.Bot.Send(m.Sender, "Sorry didn't get you! /help")
+		gl.Bot.Send(m.Sender, "Sorry we are out of context! /help")
 		return
 	}
 
-	que := convo.expectNext(gl, m.Text)
-	gl.Bot.Send(m.Sender, que)
-}
+	convo.handlers = make(map[string]Expector)
+	convo.Handle("account", convo.expectAccount)
+	convo.Handle("amount", convo.expectAmount)
+	convo.Handle("currency", convo.expectCurrency)
+	convo.Handle("description", convo.expectDescription)
+	convo.Handle("date", convo.expectDate)
+	convo.Handle("from date", convo.expectFromDate)
+	convo.Handle("till date", convo.expectTillDate)
 
-func genQues(ask string) string {
-	return fmt.Sprintf("What is the %s?", ask)
+	gl.Bot.Send(m.Sender, convo.expectNext(gl, m.Text))
 }

@@ -1,38 +1,30 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/Donnie/Airstrip/ptr"
 )
 
-func (convo *Convo) expectNext(gl *Global, expect string) (out string) {
-	switch *convo.Expect {
-	case "account":
-		convo.expectAccount(gl, expect)
-	case "amount":
-		convo.expectAmount(gl, expect)
-	case "currency":
-		convo.expectCurrency(gl, expect)
-	case "description":
-		convo.expectDescription(gl, expect)
-	case "date":
-		convo.expectDate(gl, expect)
-	case "from date":
-		convo.expectFromDate(gl, expect)
-	case "till date":
-		convo.expectTillDate(gl, expect)
+// Handle handles a conversation by mapping expectors
+// with contextual answer
+func (convo *Convo) Handle(expect string, handler Expector) {
+	convo.handlers[expect] = handler
+}
+
+func (convo *Convo) expectNext(gl *Global, expect string) string {
+	if convo.Expect != nil {
+		convo.handlers[*convo.Expect](gl, expect)
 	}
 
 	if convo.Expect != nil {
-		out = genQues(*convo.Expect)
 		gl.Orm.Save(&convo)
-	} else {
-		out = "Record stored!"
-		gl.Orm.Delete(&convo)
+		return genQues(*convo.Expect)
 	}
-	return
+	gl.Orm.Delete(&convo)
+	return "Record stored!"
 }
 
 func (convo *Convo) expectAccount(gl *Global, input string) {
@@ -109,4 +101,8 @@ func (convo *Convo) expectTillDate(gl *Global, input string) {
 		gl.Orm.Create(&record)
 	}
 	convo.Expect = nil
+}
+
+func genQues(ask string) string {
+	return fmt.Sprintf("What is the %s?", ask)
 }
