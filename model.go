@@ -15,12 +15,9 @@ type Global struct {
 
 // Record represents one Record
 type Record struct {
-	ID        *int64     `json:"id" gorm:"primaryKey"`
-	CreatedAt *time.Time `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at"`
-	DeletedAt *time.Time `json:"-"`
+	gorm.Model
 
-	AccountID   *int64     `json:"account_id"`
+	AccountID   *uint      `json:"account_id"`
 	Account     *Account   `json:"account"`
 	Amount      *int64     `json:"amount"`
 	Currency    *string    `json:"currency"`
@@ -38,23 +35,17 @@ type Expector func(*Global, string)
 
 // Convo stores a conversation context
 type Convo struct {
-	ID        *int64     `json:"id" gorm:"primaryKey"`
-	CreatedAt *time.Time `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at"`
-	DeletedAt *time.Time `json:"-"`
+	gorm.Model
 
 	UserID    *int64              `json:"user_id"`
 	Expect    *string             `json:"expect"`
-	ContextID *int64              `json:"context_id"`
+	ContextID *uint               `json:"context_id"`
 	handlers  map[string]Expector `gorm:"-"`
 }
 
 // Account represents a partaker in a transaction
 type Account struct {
-	ID        *int64     `json:"id" gorm:"primaryKey"`
-	CreatedAt *time.Time `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at"`
-	DeletedAt *time.Time `json:"-"`
+	gorm.Model
 
 	Name *string `json:"name"`
 }
