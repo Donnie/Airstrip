@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Donnie/Airstrip/ptr"
@@ -36,7 +37,9 @@ func (convo *Convo) expectAccount(gl *Global, input string) {
 		return
 	}
 
-	gl.Orm.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("account_id", *accounts[0].ID)
+	gl.Orm.Model(&Record{}).
+		Where("id = ?", *convo.ContextID).
+		Update("account_id", accounts[0].ID)
 	convo.Expect = ptr.String("amount")
 }
 
@@ -45,7 +48,9 @@ func (convo *Convo) expectAmount(gl *Global, input string) {
 	if err != nil {
 		return
 	}
-	gl.Orm.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("amount", ptr.Int64(int64(amountFlt*100)))
+	gl.Orm.Model(&Record{}).
+		Where("id = ?", *convo.ContextID).
+		Update("amount", ptr.Int64(int64(amountFlt*100)))
 	convo.Expect = ptr.String("currency")
 }
 
@@ -54,7 +59,9 @@ func (convo *Convo) expectCurrency(gl *Global, input string) {
 	if len(currency) != 3 {
 		currency = "EUR"
 	}
-	gl.Orm.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("currency", currency)
+	gl.Orm.Model(&Record{}).
+		Where("id = ?", *convo.ContextID).
+		Update("currency", strings.ToUpper(currency))
 	convo.Expect = ptr.String("description")
 }
 
@@ -100,7 +107,6 @@ func (convo *Convo) expectTillDate(gl *Global, input string) {
 		record.TillDate = &dateTime
 		gl.Orm.Save(&record)
 	}
-	record.ID = nil
 	if *record.Form == "lend" {
 		record.Form = ptr.String("expense")
 		gl.Orm.Create(&record)

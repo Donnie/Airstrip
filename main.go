@@ -48,6 +48,7 @@ func main() {
 	if err != nil {
 		panic("failed to connect database")
 	}
+	// db.AutoMigrate(&Account{}, &Convo{}, &Record{})
 
 	gl := Global{
 		Bot: b,
@@ -55,10 +56,11 @@ func main() {
 	}
 
 	b.Handle("/start", gl.handleHelp)
+	b.Handle("/help", gl.handleHelp)
 	b.Handle("/charge", gl.handleRecord)
 	b.Handle("/expense", gl.handleRecord)
+	b.Handle("/delete", gl.handleDelete)
 	b.Handle("/gain", gl.handleRecord)
-	b.Handle("/help", gl.handleHelp)
 	b.Handle("/income", gl.handleRecord)
 	b.Handle("/lend", gl.handleRecord)
 	b.Handle("/loan", gl.handleRecord)
