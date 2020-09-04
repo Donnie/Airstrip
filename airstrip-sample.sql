@@ -230,6 +230,27 @@ ALTER TABLE ONLY public.records
 
 
 --
+-- Name: idx_accounts_deleted_at; Type: INDEX; Schema: public; Owner: airstrip
+--
+
+CREATE INDEX idx_accounts_deleted_at ON public.accounts USING btree (deleted_at);
+
+
+--
+-- Name: idx_convos_deleted_at; Type: INDEX; Schema: public; Owner: airstrip
+--
+
+CREATE INDEX idx_convos_deleted_at ON public.convos USING btree (deleted_at);
+
+
+--
+-- Name: idx_records_deleted_at; Type: INDEX; Schema: public; Owner: airstrip
+--
+
+CREATE INDEX idx_records_deleted_at ON public.records USING btree (deleted_at);
+
+
+--
 -- Name: records fk_records_account; Type: FK CONSTRAINT; Schema: public; Owner: airstrip
 --
 
