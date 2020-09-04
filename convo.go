@@ -104,9 +104,8 @@ func (convo *Convo) expectDescription(gl *Global, input string) {
 }
 
 func (convo *Convo) expectDate(gl *Global, input string) {
-	date := input
 	layout := "2006-01-02 15:04"
-	dateTime, err := time.Parse(layout, date)
+	dateTime, err := time.Parse(layout, input)
 	if err != nil {
 		dateTime = time.Now()
 	}
@@ -115,9 +114,8 @@ func (convo *Convo) expectDate(gl *Global, input string) {
 }
 
 func (convo *Convo) expectFromDate(gl *Global, input string) {
-	date := input
 	layout := "Jan 2006"
-	dateTime, _ := time.Parse(layout, date)
+	dateTime, _ := time.Parse(layout, input)
 	gl.Orm.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("from_date", dateTime)
 	convo.Expect = ptr.String("till date")
 }
@@ -125,9 +123,8 @@ func (convo *Convo) expectFromDate(gl *Global, input string) {
 func (convo *Convo) expectTillDate(gl *Global, input string) {
 	record := &Record{}
 	gl.Orm.First(&record, *convo.ContextID)
-	date := input
 	layout := "Jan 2006"
-	dateTime, err := time.Parse(layout, date)
+	dateTime, err := time.Parse(layout, input)
 	if err == nil {
 		dateTime = dateTime.AddDate(0, 1, -1)
 		record.TillDate = &dateTime
