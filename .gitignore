@@ -3,4 +3,4 @@ db
 .env
 *.db
 .goreload
-*.sql
+airstrip.sql
