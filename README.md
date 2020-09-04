@@ -11,12 +11,19 @@ Add your Telegram bot token to the .env.local file and then
 
 ```make dev```
 
+### Migrate
+Copy `airstrip-sample.sql` to `airstrip.sql` and then
+
+```make migrate```
+
 ## Prod Setup
 Add your Telegram bot token to the .env file and then
 
 ```make build```
 
 ```make up```
+
+```make migrate```
 
 ## Features
 /expense Record an expense

@@ -28,7 +28,15 @@ func (convo *Convo) expectNext(gl *Global, expect string) string {
 }
 
 func (convo *Convo) expectAccount(gl *Global, input string) {
-	gl.Orm.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("account", input)
+	// find out account
+	var accounts []Account
+	gl.Orm.Where("name LIKE ?", fmt.Sprintf("%%%s%%", input)).Find(&accounts)
+
+	if len(accounts) != 1 {
+		return
+	}
+
+	gl.Orm.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("account_id", *accounts[0].ID)
 	convo.Expect = ptr.String("amount")
 }
 
