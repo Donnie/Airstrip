@@ -24,7 +24,7 @@ func (convo *Convo) expectNext(gl *Global, expect string) string {
 		gl.Orm.Save(&convo)
 		return genQues(*convo.Expect)
 	}
-	gl.Orm.Delete(&convo)
+	gl.Orm.Unscoped().Delete(&convo)
 	return "Record stored!"
 }
 
@@ -33,13 +33,39 @@ func (convo *Convo) expectAccount(gl *Global, input string) {
 	var accounts []Account
 	gl.Orm.Where("name LIKE ?", fmt.Sprintf("%%%s%%", input)).Find(&accounts)
 
-	if len(accounts) != 1 {
+	if len(accounts) == 0 {
+		convo.Expect = ptr.String("account que")
+		return
+	}
+	if len(accounts) > 1 {
+		convo.Expect = ptr.String("account choose")
 		return
 	}
 
 	gl.Orm.Model(&Record{}).
 		Where("id = ?", *convo.ContextID).
 		Update("account_id", accounts[0].ID)
+	convo.Expect = ptr.String("amount")
+}
+
+func (convo *Convo) expectAccountQue(gl *Global, input string) {
+	// new or choose
+	switch strings.ToLower(input) {
+	case "yes", "yea", "y":
+		convo.Expect = ptr.String("account name")
+	default:
+		convo.Expect = ptr.String("account")
+	}
+}
+
+func (convo *Convo) expectAccountName(gl *Global, input string) {
+	var account Account
+	account.Name = &input
+	gl.Orm.Create(&account)
+
+	gl.Orm.Model(&Record{}).
+		Where("id = ?", *convo.ContextID).
+		Update("account_id", account.ID)
 	convo.Expect = ptr.String("amount")
 }
 
@@ -117,6 +143,16 @@ func (convo *Convo) expectTillDate(gl *Global, input string) {
 	convo.Expect = nil
 }
 
-func genQues(ask string) string {
-	return fmt.Sprintf("What is the %s?", ask)
+func genQues(ask string) (out string) {
+	switch ask {
+	case "account que":
+		out = "No account found by that name. Create one? yes/no"
+	case "account choose":
+		out = "More than one account found. Be more specific."
+	case "account name":
+		out = "What is the account name?"
+	default:
+		out = fmt.Sprintf("What is the %s?", ask)
+	}
+	return
 }

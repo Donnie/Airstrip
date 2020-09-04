@@ -19,6 +19,9 @@ func (gl *Global) handleContext(m *tb.Message) {
 
 	convo.handlers = make(map[string]Expector)
 	convo.Handle("account", convo.expectAccount)
+	convo.Handle("account choose", convo.expectAccount)
+	convo.Handle("account que", convo.expectAccountQue)
+	convo.Handle("account name", convo.expectAccountName)
 	convo.Handle("amount", convo.expectAmount)
 	convo.Handle("currency", convo.expectCurrency)
 	convo.Handle("description", convo.expectDescription)
