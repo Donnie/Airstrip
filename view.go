@@ -17,8 +17,8 @@ func (gl *Global) handleView(m *tb.Message) {
 	recs := []Record{}
 	gl.Orm.Preload("Account").
 		Where(
-			gl.Orm.Where("(?::date BETWEEN from_date AND till_date)", time.Now()).
-				Or("(?::date >= from_date AND till_date IS NULL)", time.Now()),
+			gl.Orm.Where("(?::date BETWEEN from_date AND till_date)", t).
+				Or("(?::date >= from_date AND till_date IS NULL)", t),
 		).
 		Or(
 			gl.Orm.Where("EXTRACT(MONTH FROM date) = ?", int(t.Month())).
