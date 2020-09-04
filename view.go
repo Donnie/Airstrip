@@ -15,7 +15,7 @@ func (gl *Global) handleView(m *tb.Message) {
 	}
 
 	recs := []Record{}
-	gl.Orm.
+	gl.Orm.Preload("Account").
 		Where(
 			gl.Orm.Where("(?::date BETWEEN from_date AND till_date)", time.Now()).
 				Or("(?::date >= from_date AND till_date IS NULL)", time.Now()),
@@ -38,17 +38,17 @@ func prepareView(recs []Record) (output string) {
 	for _, rec := range recs {
 		switch *rec.Form {
 		case "expense":
-			expenses = append(expenses, fmt.Sprintf("`%s %d %s`\n", *rec.Account, *rec.Amount/100, *rec.Currency))
+			expenses = append(expenses, fmt.Sprintf("`%s %d %s`\n", *rec.Account.Name, *rec.Amount/100, *rec.Currency))
 		case "gain":
-			gains = append(gains, fmt.Sprintf("`%s %d %s`\n", *rec.Account, *rec.Amount/100, *rec.Currency))
+			gains = append(gains, fmt.Sprintf("`%s %d %s`\n", *rec.Account.Name, *rec.Amount/100, *rec.Currency))
 		case "loan":
-			loans = append(loans, fmt.Sprintf("`%s %d %s`\n", *rec.Account, *rec.Amount/100, *rec.Currency))
+			loans = append(loans, fmt.Sprintf("`%s %d %s`\n", *rec.Account.Name, *rec.Amount/100, *rec.Currency))
 		case "lend":
-			lends = append(lends, fmt.Sprintf("`%s %d %s`\n", *rec.Account, *rec.Amount/100, *rec.Currency))
+			lends = append(lends, fmt.Sprintf("`%s %d %s`\n", *rec.Account.Name, *rec.Amount/100, *rec.Currency))
 		case "income":
-			incomes = append(incomes, fmt.Sprintf("`%s %d %s`\n", *rec.Account, *rec.Amount/100, *rec.Currency))
+			incomes = append(incomes, fmt.Sprintf("`%s %d %s`\n", *rec.Account.Name, *rec.Amount/100, *rec.Currency))
 		case "charge":
-			charges = append(charges, fmt.Sprintf("`%s %d %s`\n", *rec.Account, *rec.Amount/100, *rec.Currency))
+			charges = append(charges, fmt.Sprintf("`%s %d %s`\n", *rec.Account.Name, *rec.Amount/100, *rec.Currency))
 		}
 	}
 
