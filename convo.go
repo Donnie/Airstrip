@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Donnie/Airstrip/ptr"
+	"gorm.io/gorm"
 )
 
 // Handle handles a conversation by mapping expectors
@@ -15,23 +16,23 @@ func (convo *Convo) Handle(expect string, handler Expector) {
 	convo.handlers[expect] = handler
 }
 
-func (convo *Convo) expectNext(gl *Global, expect string) string {
+func (convo *Convo) expectNext(db *gorm.DB, expect string) string {
 	if convo.Expect != nil {
-		convo.handlers[*convo.Expect](gl, expect)
+		convo.handlers[*convo.Expect](db, expect)
 	}
 
 	if convo.Expect != nil {
-		gl.Orm.Save(&convo)
+		db.Save(&convo)
 		return genQues(*convo.Expect)
 	}
-	gl.Orm.Unscoped().Delete(&convo)
+	db.Unscoped().Delete(&convo)
 	return "Record stored!"
 }
 
-func (convo *Convo) expectAccount(gl *Global, input string) {
+func (convo *Convo) expectAccount(db *gorm.DB, input string) {
 	// find out account
 	var accounts []Account
-	gl.Orm.Where("name LIKE ?", fmt.Sprintf("%%%s%%", input)).Find(&accounts)
+	db.Where("name LIKE ?", fmt.Sprintf("%%%s%%", input)).Find(&accounts)
 
 	if len(accounts) == 0 {
 		convo.Expect = ptr.String("account que")
@@ -42,14 +43,13 @@ func (convo *Convo) expectAccount(gl *Global, input string) {
 		return
 	}
 
-	gl.Orm.Model(&Record{}).
+	db.Model(&Record{}).
 		Where("id = ?", *convo.ContextID).
 		Update("account_id", accounts[0].ID)
 	convo.Expect = ptr.String("amount")
 }
 
-func (convo *Convo) expectAccountQue(gl *Global, input string) {
-	// new or choose
+func (convo *Convo) expectAccountQue(db *gorm.DB, input string) {
 	switch strings.ToLower(input) {
 	case "yes", "yea", "y":
 		convo.Expect = ptr.String("account name")
@@ -58,44 +58,44 @@ func (convo *Convo) expectAccountQue(gl *Global, input string) {
 	}
 }
 
-func (convo *Convo) expectAccountName(gl *Global, input string) {
+func (convo *Convo) expectAccountName(db *gorm.DB, input string) {
 	var account Account
 	account.Name = &input
-	gl.Orm.Create(&account)
+	db.Create(&account)
 
-	gl.Orm.Model(&Record{}).
+	db.Model(&Record{}).
 		Where("id = ?", *convo.ContextID).
 		Update("account_id", account.ID)
 	convo.Expect = ptr.String("amount")
 }
 
-func (convo *Convo) expectAmount(gl *Global, input string) {
+func (convo *Convo) expectAmount(db *gorm.DB, input string) {
 	amountFlt, err := strconv.ParseFloat(input, 64)
 	if err != nil {
 		return
 	}
-	gl.Orm.Model(&Record{}).
+	db.Model(&Record{}).
 		Where("id = ?", *convo.ContextID).
 		Update("amount", ptr.Int64(int64(amountFlt*100)))
 	convo.Expect = ptr.String("currency")
 }
 
-func (convo *Convo) expectCurrency(gl *Global, input string) {
+func (convo *Convo) expectCurrency(db *gorm.DB, input string) {
 	currency := input
 	if len(currency) != 3 {
 		currency = "EUR"
 	}
-	gl.Orm.Model(&Record{}).
+	db.Model(&Record{}).
 		Where("id = ?", *convo.ContextID).
 		Update("currency", strings.ToUpper(currency))
 	convo.Expect = ptr.String("description")
 }
 
-func (convo *Convo) expectDescription(gl *Global, input string) {
+func (convo *Convo) expectDescription(db *gorm.DB, input string) {
 	record := &Record{}
-	gl.Orm.First(&record, *convo.ContextID)
+	db.First(&record, *convo.ContextID)
 	record.Description = &input
-	gl.Orm.Save(&record)
+	db.Save(&record)
 	if *record.Type == "variable" {
 		convo.Expect = ptr.String("date")
 	} else {
@@ -103,39 +103,39 @@ func (convo *Convo) expectDescription(gl *Global, input string) {
 	}
 }
 
-func (convo *Convo) expectDate(gl *Global, input string) {
+func (convo *Convo) expectDate(db *gorm.DB, input string) {
 	layout := "2006-01-02 15:04"
 	dateTime, err := time.Parse(layout, input)
 	if err != nil {
 		dateTime = time.Now()
 	}
-	gl.Orm.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("date", dateTime)
+	db.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("date", dateTime)
 	convo.Expect = nil
 }
 
-func (convo *Convo) expectFromDate(gl *Global, input string) {
+func (convo *Convo) expectFromDate(db *gorm.DB, input string) {
 	layout := "Jan 2006"
 	dateTime, _ := time.Parse(layout, input)
-	gl.Orm.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("from_date", dateTime)
+	db.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("from_date", dateTime)
 	convo.Expect = ptr.String("till date")
 }
 
-func (convo *Convo) expectTillDate(gl *Global, input string) {
+func (convo *Convo) expectTillDate(db *gorm.DB, input string) {
 	record := &Record{}
-	gl.Orm.First(&record, *convo.ContextID)
+	db.First(&record, *convo.ContextID)
 	layout := "Jan 2006"
 	dateTime, err := time.Parse(layout, input)
 	if err == nil {
 		dateTime = dateTime.AddDate(0, 1, -1)
 		record.TillDate = &dateTime
-		gl.Orm.Save(&record)
+		db.Save(&record)
 	}
 	if *record.Form == "lend" {
 		record.Form = ptr.String("expense")
-		gl.Orm.Create(&record)
+		db.Create(&record)
 	} else if *record.Form == "loan" {
 		record.Form = ptr.String("gain")
-		gl.Orm.Create(&record)
+		db.Create(&record)
 	}
 	convo.Expect = nil
 }
@@ -143,7 +143,7 @@ func (convo *Convo) expectTillDate(gl *Global, input string) {
 func genQues(ask string) (out string) {
 	switch ask {
 	case "account que":
-		out = "No account found by that name. Create one? yes/no"
+		out = "No account found by that name. Create one?"
 	case "account choose":
 		out = "More than one account found. Be more specific."
 	case "account name":

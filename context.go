@@ -29,5 +29,5 @@ func (gl *Global) handleContext(m *tb.Message) {
 	convo.Handle("from date", convo.expectFromDate)
 	convo.Handle("till date", convo.expectTillDate)
 
-	gl.Bot.Send(m.Sender, convo.expectNext(gl, m.Text))
+	gl.Bot.Send(m.Sender, convo.expectNext(gl.Orm, m.Text))
 }

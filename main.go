@@ -34,7 +34,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	b, err := tb.NewBot(tb.Settings{
+	bot, err := tb.NewBot(tb.Settings{
 		Token:  teleToken,
 		Poller: &tb.LongPoller{Timeout: 10 * time.Second},
 	})
@@ -51,23 +51,24 @@ func main() {
 	// db.AutoMigrate(&Account{}, &Convo{}, &Record{})
 
 	gl := Global{
-		Bot: b,
+		Bot: bot,
 		Orm: db,
 	}
 
-	b.Handle("/start", gl.handleHelp)
-	b.Handle("/help", gl.handleHelp)
-	b.Handle("/charge", gl.handleRecord)
-	b.Handle("/expense", gl.handleRecord)
-	b.Handle("/delete", gl.handleDelete)
-	b.Handle("/gain", gl.handleRecord)
-	b.Handle("/income", gl.handleRecord)
-	b.Handle("/lend", gl.handleRecord)
-	b.Handle("/loan", gl.handleRecord)
-	b.Handle("/predict", gl.handlePredict)
-	b.Handle("/view", gl.handleView)
+	bot.Handle("/start", gl.handleHelp)
+	bot.Handle("/help", gl.handleHelp)
+	bot.Handle("/charge", gl.handleRecord)
+	bot.Handle("/expense", gl.handleRecord)
+	bot.Handle("/delete", gl.handleDelete)
+	bot.Handle("/gain", gl.handleRecord)
+	bot.Handle("/income", gl.handleRecord)
+	bot.Handle("/lend", gl.handleRecord)
+	bot.Handle("/loan", gl.handleRecord)
+	bot.Handle("/predict", gl.handlePredict)
+	bot.Handle("/view", gl.handleView)
 
-	b.Handle(tb.OnText, gl.handleContext)
+	bot.Handle(tb.OnText, gl.handleContext)
+	bot.Handle(tb.OnCallback, gl.handleCallback)
 
-	b.Start()
+	bot.Start()
 }
