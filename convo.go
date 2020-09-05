@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Donnie/Airstrip/ptr"
+	tb "gopkg.in/tucnak/telebot.v2"
 	"gorm.io/gorm"
 )
 
@@ -36,6 +37,11 @@ func (convo *Convo) expectAccount(db *gorm.DB, input string) {
 
 	if len(accounts) == 0 {
 		convo.Expect = ptr.String("account que")
+		convo.menu = tb.ReplyMarkup{}
+		convo.menu.Inline(
+			convo.menu.Row(convo.menu.Data("Yes", "y")),
+			convo.menu.Row(convo.menu.Data("No", "n")),
+		)
 		return
 	}
 	if len(accounts) > 1 {
