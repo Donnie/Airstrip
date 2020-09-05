@@ -1,19 +1,31 @@
 package main
 
 import (
+	"strings"
+
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
-func (gl *Global) handleContext(m *tb.Message) {
-	userID := int64(m.Sender.ID)
+func (gl *Global) handleText(m *tb.Message) {
+	gl.handleContext(m.Sender, m.Text)
+}
 
+func (gl *Global) handleCallback(m *tb.Callback) {
+	gl.handleContext(m.Sender, strings.TrimSpace(m.Data))
+	gl.Bot.Respond(m, &tb.CallbackResponse{
+		CallbackID: m.ID,
+		Text:       "Cool!",
+	})
+}
+
+func (gl *Global) handleContext(sender *tb.User, input string) {
 	convo := &Convo{}
 	res := gl.Orm.
-		Where("user_id = ?", userID).
-		Last(convo)
+		Where("user_id = ?", sender.ID).
+		Last(&convo)
 
 	if res.Error != nil {
-		gl.Bot.Send(m.Sender, "Sorry we are out of context! /help")
+		gl.Bot.Send(sender, "Sorry we are out of context! /help")
 		return
 	}
 
@@ -28,6 +40,7 @@ func (gl *Global) handleContext(m *tb.Message) {
 	convo.Handle("date", convo.expectDate)
 	convo.Handle("from date", convo.expectFromDate)
 	convo.Handle("till date", convo.expectTillDate)
+	convo.expectNext(gl.Orm, input)
 
-	gl.Bot.Send(m.Sender, convo.expectNext(gl, m.Text))
+	gl.Bot.Send(sender, convo.response, &convo.menu)
 }

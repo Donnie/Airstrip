@@ -31,16 +31,21 @@ type Record struct {
 }
 
 // Expector is a function which expects a contextual response
-type Expector func(*Global, string)
+type Expector func(*gorm.DB, string)
 
 // Convo stores a conversation context
+// the non-db fields are used to manipulate the bot
 type Convo struct {
 	gorm.Model
 
-	UserID    *int64              `json:"user_id"`
-	Expect    *string             `json:"expect"`
-	ContextID *uint               `json:"context_id"`
-	handlers  map[string]Expector `gorm:"-"`
+	UserID    *int64  `json:"user_id"`
+	Expect    *string `json:"expect"`
+	ContextID *uint   `json:"context_id"`
+
+	// non db fields
+	handlers map[string]Expector `gorm:"-"`
+	response string              `gorm:"-"`
+	menu     tb.ReplyMarkup      `gorm:"-"`
 }
 
 // Account represents a partaker in a transaction
