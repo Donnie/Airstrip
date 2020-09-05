@@ -6,16 +6,26 @@ import (
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
-func (gl *Global) handleContext(m *tb.Message) {
-	userID := int64(m.Sender.ID)
+func (gl *Global) handleText(m *tb.Message) {
+	gl.handleContext(m.Sender, m.Text)
+}
 
+func (gl *Global) handleCallback(m *tb.Callback) {
+	gl.handleContext(m.Sender, strings.TrimSpace(m.Data))
+	gl.Bot.Respond(m, &tb.CallbackResponse{
+		CallbackID: m.ID,
+		Text:       "Cool!",
+	})
+}
+
+func (gl *Global) handleContext(sender *tb.User, input string) {
 	convo := &Convo{}
 	res := gl.Orm.
-		Where("user_id = ?", userID).
-		Last(convo)
+		Where("user_id = ?", sender.ID).
+		Last(&convo)
 
 	if res.Error != nil {
-		gl.Bot.Send(m.Sender, "Sorry we are out of context! /help")
+		gl.Bot.Send(sender, "Sorry we are out of context! /help")
 		return
 	}
 
@@ -30,30 +40,7 @@ func (gl *Global) handleContext(m *tb.Message) {
 	convo.Handle("date", convo.expectDate)
 	convo.Handle("from date", convo.expectFromDate)
 	convo.Handle("till date", convo.expectTillDate)
+	convo.expectNext(gl.Orm, input)
 
-	gl.Bot.Send(m.Sender, convo.expectNext(gl.Orm, m.Text), &convo.menu)
-}
-
-func (gl *Global) handleCallback(m *tb.Callback) {
-	userID := int64(m.Sender.ID)
-	data := strings.TrimSpace(m.Data)
-
-	convo := &Convo{}
-	res := gl.Orm.
-		Where("user_id = ?", userID).
-		Last(convo)
-
-	if res.Error != nil {
-		gl.Bot.Send(m.Sender, "Sorry we are out of context! /help")
-		return
-	}
-
-	gl.Bot.Respond(m, &tb.CallbackResponse{
-		CallbackID: m.ID,
-		Text:       "Cool!",
-	})
-
-	convo.handlers = make(map[string]Expector)
-	convo.Handle("account que", convo.expectAccountQue)
-	gl.Bot.Send(m.Sender, convo.expectNext(gl.Orm, data), &convo.menu)
+	gl.Bot.Send(sender, convo.response, &convo.menu)
 }

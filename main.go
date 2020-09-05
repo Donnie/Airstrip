@@ -67,7 +67,7 @@ func main() {
 	bot.Handle("/predict", gl.handlePredict)
 	bot.Handle("/view", gl.handleView)
 
-	bot.Handle(tb.OnText, gl.handleContext)
+	bot.Handle(tb.OnText, gl.handleText)
 	bot.Handle(tb.OnCallback, gl.handleCallback)
 
 	bot.Start()

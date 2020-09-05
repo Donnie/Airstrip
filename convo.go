@@ -17,17 +17,18 @@ func (convo *Convo) Handle(expect string, handler Expector) {
 	convo.handlers[expect] = handler
 }
 
-func (convo *Convo) expectNext(db *gorm.DB, expect string) string {
+func (convo *Convo) expectNext(db *gorm.DB, expect string) {
 	if convo.Expect != nil {
 		convo.handlers[*convo.Expect](db, expect)
 	}
 
 	if convo.Expect != nil {
 		db.Save(&convo)
-		return genQues(*convo.Expect)
+		convo.response = genQues(*convo.Expect)
+		return
 	}
 	db.Unscoped().Delete(&convo)
-	return "Record stored!"
+	convo.response = "Record stored!"
 }
 
 func (convo *Convo) expectAccount(db *gorm.DB, input string) {
@@ -39,8 +40,10 @@ func (convo *Convo) expectAccount(db *gorm.DB, input string) {
 		convo.Expect = ptr.String("account que")
 		convo.menu = tb.ReplyMarkup{}
 		convo.menu.Inline(
-			convo.menu.Row(convo.menu.Data("Yes", "y")),
-			convo.menu.Row(convo.menu.Data("No", "n")),
+			convo.menu.Row(
+				convo.menu.Data("Yes", "y"),
+				convo.menu.Data("No", "n"),
+			),
 		)
 		return
 	}
@@ -153,7 +156,7 @@ func genQues(ask string) (out string) {
 	case "account choose":
 		out = "More than one account found. Be more specific."
 	case "account name":
-		out = "What is the account name?"
+		out = "What is the new account name?"
 	default:
 		out = fmt.Sprintf("What is the %s?", ask)
 	}
