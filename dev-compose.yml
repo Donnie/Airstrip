@@ -5,7 +5,6 @@ services:
             context: .
             dockerfile: Dockerfile.dev
         command: goreload .
-        env_file: .env.local
         links:
             - postgres
         ports:

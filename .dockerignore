@@ -1,0 +1,8 @@
+.dockerignore
+.env
+.env.local
+db
+.git
+main
+.goreload
+airstrip.sql
