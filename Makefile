@@ -1,4 +1,5 @@
 build:
+	@echo "Building for prod"
 	docker-compose build --pull
 
 builddev:
@@ -7,7 +8,13 @@ builddev:
 dev:
 	docker-compose -f dev-compose.yml up
 
+deploy: build
+	echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USERNAME)" --password-stdin
+	docker push donnieashok/airstrip:prod
+	@echo "Deployed!"
+
 up:
+	@echo "Running for Prod"
 	docker-compose up
 
 sql:

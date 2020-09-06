@@ -3,6 +3,7 @@ services:
     airstrip:
         build: .
         env_file: .env
+        image: donnieashok/airstrip:prod
         links:
             - postgres
         ports:

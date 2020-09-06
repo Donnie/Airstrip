@@ -1,6 +1,5 @@
 db
 .env.local
 .env
-*.db
 .goreload
 airstrip.sql
