@@ -41,9 +41,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	bot, err := tb.NewBot(tb.Settings{Token: teleToken, Synchronous: true})
-	if err != nil {
-		fmt.Println(err)
+	webhook, exists := os.LookupEnv("WEBHOOK")
+	if !exists {
+		fmt.Println("Add WEBHOOK to .env file")
 		os.Exit(1)
 	}
 
@@ -54,6 +54,17 @@ func main() {
 		os.Exit(1)
 	}
 	// db.AutoMigrate(&Account{}, &Convo{}, &Record{})
+
+	bot, err := tb.NewBot(tb.Settings{Token: teleToken, Synchronous: true})
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	bot.SetWebhook(&tb.Webhook{
+		Listen:   ":" + port,
+		Endpoint: &tb.WebhookEndpoint{PublicURL: webhook + "/hook"},
+	})
 
 	gl := Global{Bot: bot, Orm: db}
 
@@ -82,7 +93,6 @@ func main() {
 
 		var inp tb.Update
 		err = json.Unmarshal(b, &inp)
-		fmt.Println(string(b))
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return

@@ -4,6 +4,15 @@
 Personal finance management bot on Telegram
 
 ## Dev Setup
+### Webhook
+The app needs to set up a webhook for Telegram to relay updates.
+
+You can set up your webhook locally on your port using ngrok like so:
+
+```./ngrok http 8080```
+
+Copy the forwarding URL from ngrok to the .env.local file
+
 ### Start Project
 Add your Telegram bot token to the .env.local file and then
 
@@ -17,7 +26,7 @@ Copy `airstrip-sample.sql` to `airstrip.sql` and then
 ```make migrate```
 
 ## Prod Setup
-Add your Telegram bot token to the .env file and then
+Add your Telegram bot token, port and webhook to the .env file and then
 
 ```make build```
 
