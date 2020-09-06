@@ -8,6 +8,8 @@ services:
         env_file: .env.local
         links:
             - postgres
+        ports:
+            - '${PORT}:${PORT}'
         volumes:
             - ./:/build
     postgres:
