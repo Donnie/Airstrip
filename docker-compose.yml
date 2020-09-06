@@ -5,6 +5,8 @@ services:
         env_file: .env
         links:
             - postgres
+        ports:
+            - '${PORT}:${PORT}'
     postgres:
         container_name: airstrip_db
         hostname: postgres
