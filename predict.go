@@ -8,7 +8,7 @@ import (
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
-func (gl *Global) handlePredict(m *tb.Message) {
+func (st *State) handlePredict(m *tb.Message) {
 	var layout = "Jan 2006"
 	userID := int64(m.Sender.ID)
 
@@ -22,7 +22,7 @@ func (gl *Global) handlePredict(m *tb.Message) {
 	}
 
 	recs := []Record{}
-	gl.Orm.Preload("Account").
+	st.Orm.Preload("Account").
 		Where("user_id = ?", userID).
 		Find(&recs)
 
@@ -31,7 +31,7 @@ func (gl *Global) handlePredict(m *tb.Message) {
 	cashFutr := calcFutr(t, recs)
 
 	output := fmt.Sprintf("*Prediction* for month end %s:\n%d EUR", t.Format(layout), (cashCurr-costPlan+cashFutr)/100)
-	gl.Bot.Send(m.Sender, output, tb.ModeMarkdown)
+	st.Bot.Send(m.Sender, output, tb.ModeMarkdown)
 }
 
 func calcCurr(recs []Record) (cash int) {

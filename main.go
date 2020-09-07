@@ -1,10 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -61,47 +58,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	bot.SetWebhook(&tb.Webhook{
-		Listen:   ":" + port,
-		Endpoint: &tb.WebhookEndpoint{PublicURL: webhook + "/hook"},
-	})
+	st := State{
+		Bot: bot,
+		Orm: db,
+		Env: &Env{
+			PORT:      port,
+			TELETOKEN: teleToken,
+			WEBHOOK:   webhook,
+		},
+	}
 
-	gl := Global{Bot: bot, Orm: db}
-
-	bot.Handle("/start", gl.handleHelp)
-	bot.Handle("/help", gl.handleHelp)
-	bot.Handle("/charge", gl.handleRecord)
-	bot.Handle("/expense", gl.handleRecord)
-	bot.Handle("/delete", gl.handleDelete)
-	bot.Handle("/gain", gl.handleRecord)
-	bot.Handle("/income", gl.handleRecord)
-	bot.Handle("/lend", gl.handleRecord)
-	bot.Handle("/loan", gl.handleRecord)
-	bot.Handle("/predict", gl.handlePredict)
-	bot.Handle("/view", gl.handleView)
-
-	bot.Handle(tb.OnText, gl.handleText)
-	bot.Handle(tb.OnCallback, gl.handleCallback)
-
-	http.HandleFunc("/hook", func(w http.ResponseWriter, r *http.Request) {
-		b, err := ioutil.ReadAll(r.Body)
-		defer r.Body.Close()
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
-
-		var inp tb.Update
-		err = json.Unmarshal(b, &inp)
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
-
-		bot.ProcessUpdate(inp)
-
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	})
-	http.ListenAndServe(":"+port, nil)
+	st.startBot()
+	st.handleHook()
 }

@@ -122,6 +122,18 @@ func (convo *Convo) expectDate(db *gorm.DB, input string) {
 	convo.Expect = nil
 }
 
+func (convo *Convo) expectForm(db *gorm.DB, input string) {
+	typ := "variable"
+	if input == "income" || input == "charge" {
+		typ = "fixed"
+	}
+
+	db.Model(&Record{}).
+		Where("id = ?", *convo.ContextID).
+		Updates(map[string]interface{}{"form": input, "type": typ})
+	convo.Expect = ptr.String("account")
+}
+
 func (convo *Convo) expectFromDate(db *gorm.DB, input string) {
 	layout := "Jan 2006"
 	dateTime, _ := time.Parse(layout, input)
