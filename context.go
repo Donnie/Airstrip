@@ -38,6 +38,7 @@ func (st *State) handleContext(sender *tb.User, input string) {
 	convo.Handle("currency", convo.expectCurrency)
 	convo.Handle("description", convo.expectDescription)
 	convo.Handle("date", convo.expectDate)
+	convo.Handle("form", convo.expectForm)
 	convo.Handle("from date", convo.expectFromDate)
 	convo.Handle("till date", convo.expectTillDate)
 	convo.expectNext(st.Orm, input)

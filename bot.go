@@ -16,14 +16,9 @@ func (st *State) startBot() {
 
 	st.Bot.Handle("/start", st.handleHelp)
 	st.Bot.Handle("/help", st.handleHelp)
-	st.Bot.Handle("/charge", st.handleRecord)
-	st.Bot.Handle("/expense", st.handleRecord)
 	st.Bot.Handle("/delete", st.handleDelete)
-	st.Bot.Handle("/gain", st.handleRecord)
-	st.Bot.Handle("/income", st.handleRecord)
-	st.Bot.Handle("/lend", st.handleRecord)
-	st.Bot.Handle("/loan", st.handleRecord)
 	st.Bot.Handle("/predict", st.handlePredict)
+	st.Bot.Handle("/record", st.handleRecord)
 	st.Bot.Handle("/view", st.handleView)
 
 	st.Bot.Handle(tb.OnText, st.handleText)
