@@ -7,10 +7,18 @@ import (
 	"gorm.io/gorm"
 )
 
-// Global holds fundamental items
-type Global struct {
+// State holds fundamental items
+type State struct {
 	Bot *tb.Bot
 	Orm *gorm.DB
+	Env *Env
+}
+
+// Env to hold env vars
+type Env struct {
+	PORT      string
+	TELETOKEN string
+	WEBHOOK   string
 }
 
 // Record represents one Record

@@ -7,7 +7,7 @@ import (
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
-func (gl *Global) handleView(m *tb.Message) {
+func (st *State) handleView(m *tb.Message) {
 	var layout = "Jan 2006"
 	t, err := time.Parse(layout, m.Payload)
 	if err != nil {
@@ -15,13 +15,13 @@ func (gl *Global) handleView(m *tb.Message) {
 	}
 
 	recs := []Record{}
-	gl.Orm.Preload("Account").
+	st.Orm.Preload("Account").
 		Where(
-			gl.Orm.Where("(?::date BETWEEN from_date AND till_date)", t).
+			st.Orm.Where("(?::date BETWEEN from_date AND till_date)", t).
 				Or("(?::date >= from_date AND till_date IS NULL)", t),
 		).
 		Or(
-			gl.Orm.Where("EXTRACT(MONTH FROM date) = ?", int(t.Month())).
+			st.Orm.Where("EXTRACT(MONTH FROM date) = ?", int(t.Month())).
 				Where("EXTRACT(YEAR FROM date) = ?", t.Year()),
 		).
 		Find(&recs)
@@ -29,7 +29,7 @@ func (gl *Global) handleView(m *tb.Message) {
 	output := fmt.Sprintf("*Overview of %s*\n", t.Format(layout))
 	output += prepareView(recs)
 
-	gl.Bot.Send(m.Sender, output, tb.ModeMarkdown)
+	st.Bot.Send(m.Sender, output, tb.ModeMarkdown)
 }
 
 func prepareView(recs []Record) (output string) {
