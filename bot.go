@@ -11,7 +11,7 @@ import (
 func (st *State) startBot() {
 	st.Bot.SetWebhook(&tb.Webhook{
 		Listen:   ":" + st.Env.PORT,
-		Endpoint: &tb.WebhookEndpoint{PublicURL: st.Env.WEBHOOK + "/hook"},
+		Endpoint: &tb.WebhookEndpoint{PublicURL: st.Env.WEBHOOK + "/" + st.Env.TELETOKEN},
 	})
 
 	st.Bot.Handle("/start", st.handleHelp)
@@ -26,7 +26,7 @@ func (st *State) startBot() {
 }
 
 func (st *State) handleHook() {
-	http.HandleFunc("/hook", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/"+st.Env.TELETOKEN, func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)
 		defer r.Body.Close()
 		if err != nil {
