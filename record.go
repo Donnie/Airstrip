@@ -26,7 +26,6 @@ func (st *State) handleRecord(m *tb.Message) {
 	st.Orm.Create(&convo)
 
 	convo.response = genQues("form")
-	convo.menu = tb.ReplyMarkup{}
 	convo.menu.Inline(
 		convo.menu.Row(
 			convo.menu.Data("Expense", "expense"),
