@@ -33,7 +33,6 @@ func (st *State) handleContext(sender *tb.User, input string) {
 	convo.Handle("account", convo.expectAccount)
 	convo.Handle("account choose", convo.expectAccount)
 	convo.Handle("account que", convo.expectAccountQue)
-	convo.Handle("account name", convo.expectAccountName)
 	convo.Handle("amount", convo.expectAmount)
 	convo.Handle("currency", convo.expectCurrency)
 	convo.Handle("description", convo.expectDescription)
@@ -43,5 +42,5 @@ func (st *State) handleContext(sender *tb.User, input string) {
 	convo.Handle("till date", convo.expectTillDate)
 	convo.expectNext(st.Orm, input)
 
-	st.Bot.Send(sender, convo.response, &convo.menu)
+	st.Bot.Send(sender, convo.response, &convo.menu, tb.ModeMarkdownV2)
 }
