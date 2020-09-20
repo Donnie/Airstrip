@@ -30,14 +30,12 @@ type Record struct {
 	AccountOut   *Account   `json:"account_out"`
 	AccountOutID *uint      `json:"account_out_id"`
 	Amount       *int64     `json:"amount"`
-	Currency     *string    `json:"currency"`
 	Date         *time.Time `json:"date"`
 	Description  *string    `json:"description"`
-	Form         *string    `json:"form"`
 	FromDate     *time.Time `json:"from_date"`
+	Mandate      *bool      `json:"mandate"`
 	TillDate     *time.Time `json:"till_date"`
-	Type         *string    `json:"type"`
-	UserID       *int64     `json:"user_id"`
+	UserID       *int       `json:"user_id"`
 }
 
 // Expector is a function which expects a contextual response
@@ -48,7 +46,7 @@ type Expector func(*gorm.DB, string)
 type Convo struct {
 	gorm.Model
 
-	UserID    *int64  `json:"user_id"`
+	UserID    *int    `json:"user_id"`
 	Expect    *string `json:"expect"`
 	ContextID *uint   `json:"context_id"`
 
@@ -62,5 +60,7 @@ type Convo struct {
 type Account struct {
 	gorm.Model
 
-	Name *string `json:"name"`
+	Currency *string `json:"currency"`
+	Name     *string `json:"name"`
+	Self     *bool   `json:"self"`
 }

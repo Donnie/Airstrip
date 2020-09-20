@@ -33,22 +33,24 @@ func (st *State) handleView(m *tb.Message) {
 }
 
 func prepareView(recs []Record) (output string) {
-	var expenses, gains, loans, lends, incomes, charges []string
+	var expenses, gains, incomes, charges []string
 
 	for _, rec := range recs {
-		switch *rec.Form {
-		case "expense":
-			expenses = append(expenses, fmt.Sprintf("`%s %d %s`\n", *rec.AccountIn.Name, *rec.Amount/100, *rec.Currency))
-		case "gain":
-			gains = append(gains, fmt.Sprintf("`%s %d %s`\n", *rec.AccountIn.Name, *rec.Amount/100, *rec.Currency))
-		case "loan":
-			loans = append(loans, fmt.Sprintf("`%s %d %s`\n", *rec.AccountIn.Name, *rec.Amount/100, *rec.Currency))
-		case "lend":
-			lends = append(lends, fmt.Sprintf("`%s %d %s`\n", *rec.AccountIn.Name, *rec.Amount/100, *rec.Currency))
-		case "income":
-			incomes = append(incomes, fmt.Sprintf("`%s %d %s`\n", *rec.AccountIn.Name, *rec.Amount/100, *rec.Currency))
-		case "charge":
-			charges = append(charges, fmt.Sprintf("`%s %d %s`\n", *rec.AccountIn.Name, *rec.Amount/100, *rec.Currency))
+		switch *rec.AccountIn.Self {
+		case true:
+			switch *rec.Mandate {
+			case true:
+				incomes = append(incomes, fmt.Sprintf("`%s %d %s`\n", *rec.AccountIn.Name, *rec.Amount/100, *rec.AccountIn.Currency))
+			case false:
+				gains = append(gains, fmt.Sprintf("`%s %d %s`\n", *rec.AccountIn.Name, *rec.Amount/100, *rec.AccountIn.Currency))
+			}
+		case false:
+			switch *rec.Mandate {
+			case true:
+				charges = append(charges, fmt.Sprintf("`%s %d %s`\n", *rec.AccountIn.Name, *rec.Amount/100, *rec.AccountIn.Currency))
+			case false:
+				expenses = append(expenses, fmt.Sprintf("`%s %d %s`\n", *rec.AccountIn.Name, *rec.Amount/100, *rec.AccountIn.Currency))
+			}
 		}
 	}
 
@@ -59,16 +61,6 @@ func prepareView(recs []Record) (output string) {
 
 	output += "\n*Gains*\n"
 	for _, item := range gains {
-		output += item
-	}
-
-	output += "\n*Loans*\n"
-	for _, item := range loans {
-		output += item
-	}
-
-	output += "\n*Lends*\n"
-	for _, item := range lends {
 		output += item
 	}
 

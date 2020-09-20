@@ -22,7 +22,7 @@ func (st *State) handleDelete(m *tb.Message) {
 
 		output := "You can choose from last three records:\n"
 		for _, rec := range records {
-			output += fmt.Sprintf("`ID: %d\t%s: %d %s`\n", rec.ID, *rec.AccountIn.Name, *rec.Amount/100, *rec.Currency)
+			output += fmt.Sprintf("`ID: %d\t%s: %d %s`\n", rec.ID, *rec.AccountIn.Name, *rec.Amount/100, *rec.AccountIn.Currency)
 		}
 		output += "\nReply with the ID for e.g.: `/delete 24`"
 

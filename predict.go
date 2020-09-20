@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jinzhu/now"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
@@ -22,7 +21,7 @@ func (st *State) handlePredict(m *tb.Message) {
 	}
 
 	recs := []Record{}
-	st.Orm.Preload("AccountIn").
+	st.Orm.Preload("AccountIn").Preload("AccountOut").
 		Where("user_id = ?", userID).
 		Find(&recs)
 
@@ -34,25 +33,24 @@ func (st *State) handlePredict(m *tb.Message) {
 	st.Bot.Send(m.Sender, output, tb.ModeMarkdown)
 }
 
-func calcCurr(recs []Record) (cash int) {
+func calcCurr(recs []Record) (cash int64) {
 	for _, rec := range recs {
-		switch *rec.Form {
-		case "gain", "lend":
-			cash += int(*rec.Amount)
-		case "expense", "loan":
-			cash -= int(*rec.Amount)
+		if rec.isExpense() {
+			cash -= *rec.Amount
+			continue
+		}
+		if rec.isGain() {
+			cash += *rec.Amount
 		}
 	}
 	return
 }
 
-func plannedExp(recs []Record) (cash int) {
+func plannedExp(recs []Record) (cash int64) {
 	// get current month expenses
 	currExp := []Record{}
 	for _, rec := range recs {
-		if *rec.Form == "expense" &&
-			(now.BeginningOfMonth().Unix() <= rec.Date.Unix() &&
-				now.EndOfMonth().Unix() >= rec.Date.Unix()) {
+		if rec.isExpense() && rec.isCurrent() {
 			currExp = append(currExp, rec)
 		}
 	}
@@ -60,10 +58,7 @@ func plannedExp(recs []Record) (cash int) {
 	// get current month charges
 	currChg := []Record{}
 	for _, rec := range recs {
-		if *rec.Form == "charge" &&
-			(now.BeginningOfMonth().Unix() >= rec.FromDate.Unix() &&
-				(rec.TillDate == nil ||
-					now.BeginningOfMonth().Unix() <= rec.TillDate.Unix())) {
+		if rec.isCharge() && rec.isCurrent() {
 			currChg = append(currChg, rec)
 		}
 	}
@@ -77,13 +72,13 @@ func plannedExp(recs []Record) (cash int) {
 			}
 		}
 		if tobespent > 0 {
-			cash += int(tobespent)
+			cash += tobespent
 		}
 	}
 	return
 }
 
-func calcFutr(future time.Time, recs []Record) (cash int) {
+func calcFutr(future time.Time, recs []Record) (cash int64) {
 	timeNow := time.Now().AddDate(0, 1, 0)
 	reps := monthDiff(timeNow, future)
 	if reps > 0 {
@@ -94,19 +89,14 @@ func calcFutr(future time.Time, recs []Record) (cash int) {
 	return
 }
 
-func calcMonthEnd(recs []Record, month time.Time) (cash int) {
+func calcMonthEnd(recs []Record, month time.Time) (cash int64) {
 	for _, rec := range recs {
-		if (*rec.Form == "income" ||
-			*rec.Form == "charge") &&
-			(month.Unix() >= rec.FromDate.Unix() &&
-				(rec.TillDate == nil ||
-					month.Unix() <= rec.TillDate.Unix())) {
-			switch *rec.Form {
-			case "income":
-				cash += int(*rec.Amount)
-			case "charge":
-				cash -= int(*rec.Amount)
-			}
+		if rec.isIncome() && rec.isOfMonth(month) {
+			cash += *rec.Amount
+			continue
+		}
+		if rec.isCharge() && rec.isOfMonth(month) {
+			cash -= *rec.Amount
 		}
 	}
 	return
