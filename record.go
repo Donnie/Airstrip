@@ -6,7 +6,7 @@ import (
 )
 
 func (st *State) handleRecord(m *tb.Message) {
-	userID := int64(m.Sender.ID)
+	userID := m.Sender.ID
 
 	// end last conversation
 	st.Orm.Unscoped().Where("user_id = ?", userID).Delete(&Convo{})
@@ -20,23 +20,11 @@ func (st *State) handleRecord(m *tb.Message) {
 	// Create new conversation with Context
 	convo := &Convo{
 		ContextID: &item.ID,
-		Expect:    ptr.String("form"),
+		Expect:    ptr.String("account in"),
 		UserID:    &userID,
 	}
 	st.Orm.Create(&convo)
 
-	convo.response = genQues("form")
-	convo.menu.Inline(
-		convo.menu.Row(
-			convo.menu.Data("Expense", "expense"),
-			convo.menu.Data("Charge", "charge"),
-			convo.menu.Data("Loan", "loan"),
-		),
-		convo.menu.Row(
-			convo.menu.Data("Gain", "gain"),
-			convo.menu.Data("Income", "income"),
-			convo.menu.Data("Lend", "lend"),
-		),
-	)
+	convo.response = genQues("account in")
 	st.Bot.Send(m.Sender, convo.response, &convo.menu)
 }

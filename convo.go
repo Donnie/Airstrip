@@ -8,7 +8,6 @@ import (
 
 	"github.com/Donnie/Airstrip/ptr"
 	"github.com/araddon/dateparse"
-	tb "gopkg.in/tucnak/telebot.v2"
 	"gorm.io/gorm"
 )
 
@@ -32,18 +31,6 @@ func (convo *Convo) expectNext(db *gorm.DB, expect string) {
 	convo.response = "Record stored\\!"
 }
 
-func (convo *Convo) expectForm(db *gorm.DB, input string) {
-	typ := "variable"
-	if input == "income" || input == "charge" {
-		typ = "fixed"
-	}
-
-	db.Model(&Record{}).
-		Where("id = ?", *convo.ContextID).
-		Updates(map[string]interface{}{"form": input, "type": typ})
-	convo.Expect = ptr.String("account in")
-}
-
 func (convo *Convo) expectAccountIn(db *gorm.DB, input string) {
 	// find out account
 	var accounts []Account
@@ -51,7 +38,6 @@ func (convo *Convo) expectAccountIn(db *gorm.DB, input string) {
 
 	if len(accounts) == 0 {
 		convo.Expect = ptr.String("account que")
-		convo.menu = tb.ReplyMarkup{}
 		convo.menu.Inline(
 			convo.menu.Row(
 				convo.menu.Data("Yes", "y-"+input),
@@ -97,7 +83,7 @@ func (convo *Convo) expectAccountQue(db *gorm.DB, input string) {
 
 		db.Model(&Record{}).
 			Where("id = ?", *convo.ContextID).
-			Update("account_id", account.ID)
+			Update("account_in_id", account.ID)
 		convo.Expect = ptr.String("account out")
 	default:
 		convo.Expect = ptr.String("account in")
@@ -112,18 +98,22 @@ func (convo *Convo) expectAmount(db *gorm.DB, input string) {
 	db.Model(&Record{}).
 		Where("id = ?", *convo.ContextID).
 		Update("amount", ptr.Int64(int64(amountFlt*100)))
-	convo.Expect = ptr.String("currency")
+	convo.Expect = ptr.String("mandate")
+	convo.menu.Inline(
+		convo.menu.Row(
+			convo.menu.Data("Yes", "y"),
+			convo.menu.Data("No", "n"),
+		),
+	)
 }
 
-func (convo *Convo) expectCurrency(db *gorm.DB, input string) {
-	currency := input
-	if len(currency) != 3 {
-		currency = "EUR"
+func (convo *Convo) expectDate(db *gorm.DB, input string) {
+	dateTime, err := dateparse.ParseAny(input)
+	if err != nil {
+		return
 	}
-	db.Model(&Record{}).
-		Where("id = ?", *convo.ContextID).
-		Update("currency", strings.ToUpper(currency))
-	convo.Expect = ptr.String("description")
+	db.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("date", dateTime)
+	convo.Expect = nil
 }
 
 func (convo *Convo) expectDescription(db *gorm.DB, input string) {
@@ -131,39 +121,41 @@ func (convo *Convo) expectDescription(db *gorm.DB, input string) {
 	db.First(&record, *convo.ContextID)
 	record.Description = &input
 	db.Save(&record)
-	if *record.Type == "variable" {
-		convo.Expect = ptr.String("date")
-	} else {
+	if *record.Mandate {
 		convo.Expect = ptr.String("from date")
-	}
-}
-
-func (convo *Convo) expectDate(db *gorm.DB, input string) {
-	dateTime, err := dateparse.ParseAny(input)
-	if err != nil {
-		convo.Expect = ptr.String("date")
 		return
 	}
-	db.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("date", dateTime)
-	convo.Expect = nil
+	convo.Expect = ptr.String("date")
 }
 
 func (convo *Convo) expectFromDate(db *gorm.DB, input string) {
 	layout := "Jan 2006"
 	dateTime, err := time.Parse(layout, input)
 	if err != nil {
-		convo.Expect = ptr.String("from date")
 		return
 	}
 	db.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("from_date", dateTime)
 	convo.Expect = ptr.String("till date")
 }
 
+func (convo *Convo) expectMandate(db *gorm.DB, input string) {
+	switch strings.ToLower(input) {
+	case "y":
+		db.Model(&Record{}).
+			Where("id = ?", *convo.ContextID).
+			Update("mandate", true)
+	default:
+		db.Model(&Record{}).
+			Where("id = ?", *convo.ContextID).
+			Update("mandate", false)
+	}
+	convo.Expect = ptr.String("description")
+}
+
 func (convo *Convo) expectTillDate(db *gorm.DB, input string) {
 	layout := "Jan 2006"
 	dateTime, err := time.Parse(layout, input)
 	if err != nil {
-		convo.Expect = ptr.String("till date")
 		return
 	}
 	dateTime = dateTime.AddDate(0, 1, -1)
@@ -172,15 +164,6 @@ func (convo *Convo) expectTillDate(db *gorm.DB, input string) {
 	db.First(&record, *convo.ContextID)
 	record.TillDate = &dateTime
 	db.Save(&record)
-
-	if *record.Form == "lend" {
-		record.Form = ptr.String("expense")
-		db.Create(&record)
-	} else if *record.Form == "loan" {
-		record.Form = ptr.String("gain")
-		db.Create(&record)
-	}
-
 	convo.Expect = nil
 }
 
