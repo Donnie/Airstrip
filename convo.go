@@ -41,8 +41,8 @@ func (convo *Convo) expectAccount(db *gorm.DB, input string) {
 		convo.menu = tb.ReplyMarkup{}
 		convo.menu.Inline(
 			convo.menu.Row(
-				convo.menu.Data("Yes", "y"),
-				convo.menu.Data("No", "n"),
+				convo.menu.Data("Yes", "y-"+input),
+				convo.menu.Data("No", "n-"+input),
 			),
 		)
 		return
@@ -59,23 +59,20 @@ func (convo *Convo) expectAccount(db *gorm.DB, input string) {
 }
 
 func (convo *Convo) expectAccountQue(db *gorm.DB, input string) {
-	switch strings.ToLower(input) {
-	case "yes", "yea", "y":
-		convo.Expect = ptr.String("account name")
+	inp := strings.Split(input, "-")
+	switch strings.ToLower(inp[0]) {
+	case "y":
+		var account Account
+		account.Name = &inp[1]
+		db.Create(&account)
+
+		db.Model(&Record{}).
+			Where("id = ?", *convo.ContextID).
+			Update("account_id", account.ID)
+		convo.Expect = ptr.String("amount")
 	default:
 		convo.Expect = ptr.String("account")
 	}
-}
-
-func (convo *Convo) expectAccountName(db *gorm.DB, input string) {
-	var account Account
-	account.Name = &input
-	db.Create(&account)
-
-	db.Model(&Record{}).
-		Where("id = ?", *convo.ContextID).
-		Update("account_id", account.ID)
-	convo.Expect = ptr.String("amount")
 }
 
 func (convo *Convo) expectAmount(db *gorm.DB, input string) {
