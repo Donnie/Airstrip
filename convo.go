@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Donnie/Airstrip/ptr"
+	"github.com/araddon/dateparse"
 	tb "gopkg.in/tucnak/telebot.v2"
 	"gorm.io/gorm"
 )
@@ -110,10 +111,10 @@ func (convo *Convo) expectDescription(db *gorm.DB, input string) {
 }
 
 func (convo *Convo) expectDate(db *gorm.DB, input string) {
-	layout := "2006-01-02 15:04"
-	dateTime, err := time.Parse(layout, input)
+	dateTime, err := dateparse.ParseAny(input)
 	if err != nil {
-		dateTime = time.Now()
+		convo.Expect = ptr.String("date")
+		return
 	}
 	db.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("date", dateTime)
 	convo.Expect = nil
