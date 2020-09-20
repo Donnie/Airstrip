@@ -29,7 +29,9 @@ CREATE TABLE public.accounts (
     created_at timestamp with time zone,
     updated_at timestamp with time zone,
     deleted_at timestamp with time zone,
-    name text
+    currency text,
+    name text,
+    self boolean
 );
 
 
@@ -106,13 +108,11 @@ CREATE TABLE public.records (
     account_in_id bigint,
     account_out_id bigint,
     amount bigint,
-    currency text,
     date timestamp with time zone,
     description text,
-    form text,
     from_date timestamp with time zone,
+    mandate boolean,
     till_date timestamp with time zone,
-    type text,
     user_id bigint
 );
 
@@ -165,7 +165,7 @@ ALTER TABLE ONLY public.records ALTER COLUMN id SET DEFAULT nextval('public.reco
 -- Data for Name: accounts; Type: TABLE DATA; Schema: public; Owner: airstrip
 --
 
-COPY public.accounts (id, created_at, updated_at, deleted_at, name) FROM stdin;
+COPY public.accounts (id, created_at, updated_at, deleted_at, currency, name, self) FROM stdin;
 \.
 
 
@@ -181,7 +181,7 @@ COPY public.convos (id, created_at, updated_at, deleted_at, user_id, expect, con
 -- Data for Name: records; Type: TABLE DATA; Schema: public; Owner: airstrip
 --
 
-COPY public.records (id, created_at, updated_at, deleted_at, account_in_id, account_out_id, amount, currency, date, description, form, from_date, till_date, type, user_id) FROM stdin;
+COPY public.records (id, created_at, updated_at, deleted_at, account_in_id, account_out_id, amount, date, description, from_date, mandate, till_date, user_id) FROM stdin;
 \.
 
 
