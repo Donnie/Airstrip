@@ -32,7 +32,19 @@ func (convo *Convo) expectNext(db *gorm.DB, expect string) {
 	convo.response = "Record stored\\!"
 }
 
-func (convo *Convo) expectAccount(db *gorm.DB, input string) {
+func (convo *Convo) expectForm(db *gorm.DB, input string) {
+	typ := "variable"
+	if input == "income" || input == "charge" {
+		typ = "fixed"
+	}
+
+	db.Model(&Record{}).
+		Where("id = ?", *convo.ContextID).
+		Updates(map[string]interface{}{"form": input, "type": typ})
+	convo.Expect = ptr.String("account in")
+}
+
+func (convo *Convo) expectAccountIn(db *gorm.DB, input string) {
 	// find out account
 	var accounts []Account
 	db.Where("name LIKE ?", fmt.Sprintf("%%%s%%", input)).Find(&accounts)
@@ -49,13 +61,29 @@ func (convo *Convo) expectAccount(db *gorm.DB, input string) {
 		return
 	}
 	if len(accounts) > 1 {
-		convo.Expect = ptr.String("account choose")
+		convo.Expect = ptr.String("account choose in")
 		return
 	}
 
 	db.Model(&Record{}).
 		Where("id = ?", *convo.ContextID).
-		Update("account_id", accounts[0].ID)
+		Update("account_in_id", accounts[0].ID)
+	convo.Expect = ptr.String("account out")
+}
+
+func (convo *Convo) expectAccountOut(db *gorm.DB, input string) {
+	// find out account
+	var accounts []Account
+	db.Where("name LIKE ?", fmt.Sprintf("%%%s%%", input)).Find(&accounts)
+
+	if len(accounts) != 1 {
+		convo.Expect = ptr.String("account out")
+		return
+	}
+
+	db.Model(&Record{}).
+		Where("id = ?", *convo.ContextID).
+		Update("account_out_id", accounts[0].ID)
 	convo.Expect = ptr.String("amount")
 }
 
@@ -70,9 +98,9 @@ func (convo *Convo) expectAccountQue(db *gorm.DB, input string) {
 		db.Model(&Record{}).
 			Where("id = ?", *convo.ContextID).
 			Update("account_id", account.ID)
-		convo.Expect = ptr.String("amount")
+		convo.Expect = ptr.String("account out")
 	default:
-		convo.Expect = ptr.String("account")
+		convo.Expect = ptr.String("account in")
 	}
 }
 
@@ -120,18 +148,6 @@ func (convo *Convo) expectDate(db *gorm.DB, input string) {
 	convo.Expect = nil
 }
 
-func (convo *Convo) expectForm(db *gorm.DB, input string) {
-	typ := "variable"
-	if input == "income" || input == "charge" {
-		typ = "fixed"
-	}
-
-	db.Model(&Record{}).
-		Where("id = ?", *convo.ContextID).
-		Updates(map[string]interface{}{"form": input, "type": typ})
-	convo.Expect = ptr.String("account")
-}
-
 func (convo *Convo) expectFromDate(db *gorm.DB, input string) {
 	layout := "Jan 2006"
 	dateTime, err := time.Parse(layout, input)
@@ -171,9 +187,9 @@ func (convo *Convo) expectTillDate(db *gorm.DB, input string) {
 func genQues(ask string) (out string) {
 	switch ask {
 	case "account que":
-		out = "No account found by that name. Create one?"
-	case "account choose":
-		out = "More than one account found. Be more specific."
+		out = "No account found by that name\\. Create one?"
+	case "account choose in", "account choose out":
+		out = "More than one account found\\. Be more specific\\."
 	case "account name":
 		out = "What is the new account name?"
 	case "from date", "till date":

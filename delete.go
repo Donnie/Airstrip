@@ -15,14 +15,14 @@ func (st *State) handleDelete(m *tb.Message) {
 	recordID, err := strconv.ParseInt(m.Payload, 10, 64)
 	if err != nil {
 		records := []Record{}
-		st.Orm.Preload("Account").
+		st.Orm.Preload("AccountIn").
 			Limit(3).Order("id desc").
 			Where("user_id = ?", m.Sender.ID).
 			Find(&records)
 
 		output := "You can choose from last three records:\n"
 		for _, rec := range records {
-			output += fmt.Sprintf("`ID: %d\t%s: %d %s`\n", rec.ID, *rec.Account.Name, *rec.Amount/100, *rec.Currency)
+			output += fmt.Sprintf("`ID: %d\t%s: %d %s`\n", rec.ID, *rec.AccountIn.Name, *rec.Amount/100, *rec.Currency)
 		}
 		output += "\nReply with the ID for e.g.: `/delete 24`"
 
