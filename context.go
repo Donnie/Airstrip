@@ -42,5 +42,5 @@ func (st *State) handleContext(sender *tb.User, input string) {
 	convo.Handle("till date", convo.expectTillDate)
 	convo.expectNext(st.Orm, input)
 
-	st.Bot.Send(sender, convo.response, &convo.menu)
+	st.Bot.Send(sender, convo.response, &convo.menu, tb.ModeMarkdownV2)
 }

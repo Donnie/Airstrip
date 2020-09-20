@@ -29,7 +29,7 @@ func (convo *Convo) expectNext(db *gorm.DB, expect string) {
 		return
 	}
 	db.Unscoped().Delete(&convo)
-	convo.response = "Record stored!"
+	convo.response = "Record stored\\!"
 }
 
 func (convo *Convo) expectAccount(db *gorm.DB, input string) {
@@ -134,21 +134,29 @@ func (convo *Convo) expectForm(db *gorm.DB, input string) {
 
 func (convo *Convo) expectFromDate(db *gorm.DB, input string) {
 	layout := "Jan 2006"
-	dateTime, _ := time.Parse(layout, input)
+	dateTime, err := time.Parse(layout, input)
+	if err != nil {
+		convo.Expect = ptr.String("from date")
+		return
+	}
 	db.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("from_date", dateTime)
 	convo.Expect = ptr.String("till date")
 }
 
 func (convo *Convo) expectTillDate(db *gorm.DB, input string) {
-	record := &Record{}
-	db.First(&record, *convo.ContextID)
 	layout := "Jan 2006"
 	dateTime, err := time.Parse(layout, input)
-	if err == nil {
-		dateTime = dateTime.AddDate(0, 1, -1)
-		record.TillDate = &dateTime
-		db.Save(&record)
+	if err != nil {
+		convo.Expect = ptr.String("till date")
+		return
 	}
+	dateTime = dateTime.AddDate(0, 1, -1)
+
+	record := &Record{}
+	db.First(&record, *convo.ContextID)
+	record.TillDate = &dateTime
+	db.Save(&record)
+
 	if *record.Form == "lend" {
 		record.Form = ptr.String("expense")
 		db.Create(&record)
@@ -156,6 +164,7 @@ func (convo *Convo) expectTillDate(db *gorm.DB, input string) {
 		record.Form = ptr.String("gain")
 		db.Create(&record)
 	}
+
 	convo.Expect = nil
 }
 
@@ -167,6 +176,8 @@ func genQues(ask string) (out string) {
 		out = "More than one account found. Be more specific."
 	case "account name":
 		out = "What is the new account name?"
+	case "from date", "till date":
+		out = fmt.Sprintf("What is the %s?\n\nSpecify in this format: *_Jan 2006_*", ask)
 	default:
 		out = fmt.Sprintf("What is the %s?", ask)
 	}
