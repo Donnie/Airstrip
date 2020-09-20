@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	tb "gopkg.in/tucnak/telebot.v2"
@@ -30,8 +31,10 @@ func (st *State) handleContext(sender *tb.User, input string) {
 	}
 
 	convo.handlers = make(map[string]Expector)
-	convo.Handle("account", convo.expectAccount)
-	convo.Handle("account choose", convo.expectAccount)
+	convo.Handle("account in", convo.expectAccountIn)
+	convo.Handle("account out", convo.expectAccountOut)
+	convo.Handle("account choose in", convo.expectAccountIn)
+	convo.Handle("account choose out", convo.expectAccountOut)
 	convo.Handle("account que", convo.expectAccountQue)
 	convo.Handle("amount", convo.expectAmount)
 	convo.Handle("currency", convo.expectCurrency)
@@ -42,5 +45,8 @@ func (st *State) handleContext(sender *tb.User, input string) {
 	convo.Handle("till date", convo.expectTillDate)
 	convo.expectNext(st.Orm, input)
 
-	st.Bot.Send(sender, convo.response, &convo.menu, tb.ModeMarkdownV2)
+	_, err := st.Bot.Send(sender, convo.response, &convo.menu, tb.ModeMarkdownV2)
+	if err != nil {
+		fmt.Println(err)
+	}
 }

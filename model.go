@@ -25,17 +25,19 @@ type Env struct {
 type Record struct {
 	gorm.Model
 
-	AccountID   *uint      `json:"account_id"`
-	Account     *Account   `json:"account"`
-	Amount      *int64     `json:"amount"`
-	Currency    *string    `json:"currency"`
-	Date        *time.Time `json:"date"`
-	Description *string    `json:"description"`
-	Form        *string    `json:"form"`
-	FromDate    *time.Time `json:"from_date"`
-	TillDate    *time.Time `json:"till_date"`
-	Type        *string    `json:"type"`
-	UserID      *int64     `json:"user_id"`
+	AccountIn    *Account   `json:"account_in"`
+	AccountInID  *uint      `json:"account_in_id"`
+	AccountOut   *Account   `json:"account_out"`
+	AccountOutID *uint      `json:"account_out_id"`
+	Amount       *int64     `json:"amount"`
+	Currency     *string    `json:"currency"`
+	Date         *time.Time `json:"date"`
+	Description  *string    `json:"description"`
+	Form         *string    `json:"form"`
+	FromDate     *time.Time `json:"from_date"`
+	TillDate     *time.Time `json:"till_date"`
+	Type         *string    `json:"type"`
+	UserID       *int64     `json:"user_id"`
 }
 
 // Expector is a function which expects a contextual response

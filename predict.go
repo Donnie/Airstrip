@@ -22,7 +22,7 @@ func (st *State) handlePredict(m *tb.Message) {
 	}
 
 	recs := []Record{}
-	st.Orm.Preload("Account").
+	st.Orm.Preload("AccountIn").
 		Where("user_id = ?", userID).
 		Find(&recs)
 
@@ -72,7 +72,7 @@ func plannedExp(recs []Record) (cash int) {
 	for _, chg := range currChg {
 		tobespent := *chg.Amount
 		for _, exp := range currExp {
-			if *exp.AccountID == *chg.AccountID {
+			if *exp.AccountInID == *chg.AccountInID {
 				tobespent -= *exp.Amount
 			}
 		}
