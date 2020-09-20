@@ -25,14 +25,46 @@ Copy `airstrip-sample.sql` to `airstrip.sql` and then
 
 ```make migrate```
 
+### Dump
+Get a Postgres dump in `airstrip.sql` file
+
+```make dump```
+
+### Postgres Terminal
+Tinker with the database
+
+```make sql```
+
 ## Prod Setup
-Add your Telegram bot token, port and webhook to the .env file and then
 
-```make build```
+### Configure Nginx on production machine
+Set up Nginx on your production machine so that the webhook URL forwards to port 1340
 
-```make up```
+```
+server {
+	listen 80;
+	server_name webhook.url;
 
-```make migrate```
+	location / {
+		proxy_pass http://localhost:1340;
+	}
+ 
+}
+
+server {
+	listen 443 ssl;
+	server_name webhook.url;
+
+	location / {
+		proxy_pass http://localhost:1340;
+	}
+}
+```
+
+### Configure your bot .env file
+Add your Telegram bot token, port, webhook and Postgres details to the .env file and then
+
+```make live```
 
 ## Features
 /expense Record an expense
@@ -50,3 +82,5 @@ Add your Telegram bot token, port and webhook to the .env file and then
 `/predict Jan 2025` Get a prediction for your financial standing
 
 `/view Jan 2025` Get a list of records pertaining to the month
+
+/delete Delete a record
