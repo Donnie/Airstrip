@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jinzhu/now"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
@@ -36,14 +35,12 @@ func (st *State) handlePredict(m *tb.Message) {
 
 func calcCurr(recs []Record) (cash int64) {
 	for _, rec := range recs {
-		if !*rec.Mandate {
-			if *rec.AccountIn.Self && !*rec.AccountOut.Self {
-				cash += *rec.Amount
-				continue
-			}
-			if !*rec.AccountIn.Self {
-				cash -= *rec.Amount
-			}
+		if rec.isExpense() {
+			cash -= *rec.Amount
+			continue
+		}
+		if rec.isGain() {
+			cash += *rec.Amount
 		}
 	}
 	return
@@ -53,9 +50,7 @@ func plannedExp(recs []Record) (cash int64) {
 	// get current month expenses
 	currExp := []Record{}
 	for _, rec := range recs {
-		if !*rec.AccountIn.Self && !*rec.Mandate &&
-			(now.BeginningOfMonth().Unix() <= rec.Date.Unix() &&
-				now.EndOfMonth().Unix() >= rec.Date.Unix()) {
+		if rec.isExpense() && rec.isCurrent() {
 			currExp = append(currExp, rec)
 		}
 	}
@@ -63,10 +58,7 @@ func plannedExp(recs []Record) (cash int64) {
 	// get current month charges
 	currChg := []Record{}
 	for _, rec := range recs {
-		if !*rec.AccountIn.Self && *rec.Mandate &&
-			(now.BeginningOfMonth().Unix() >= rec.FromDate.Unix() &&
-				(rec.TillDate == nil ||
-					now.BeginningOfMonth().Unix() <= rec.TillDate.Unix())) {
+		if rec.isCharge() && rec.isCurrent() {
 			currChg = append(currChg, rec)
 		}
 	}
@@ -99,17 +91,12 @@ func calcFutr(future time.Time, recs []Record) (cash int64) {
 
 func calcMonthEnd(recs []Record, month time.Time) (cash int64) {
 	for _, rec := range recs {
-		if *rec.Mandate &&
-			(month.Unix() >= rec.FromDate.Unix() &&
-				(rec.TillDate == nil ||
-					month.Unix() <= rec.TillDate.Unix())) {
-			if *rec.AccountIn.Self && !*rec.AccountOut.Self {
-				cash += *rec.Amount
-				continue
-			}
-			if !*rec.AccountIn.Self {
-				cash -= *rec.Amount
-			}
+		if rec.isIncome() && rec.isOfMonth(month) {
+			cash += *rec.Amount
+			continue
+		}
+		if rec.isCharge() && rec.isOfMonth(month) {
+			cash -= *rec.Amount
 		}
 	}
 	return
