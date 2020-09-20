@@ -103,7 +103,8 @@ CREATE TABLE public.records (
     created_at timestamp with time zone,
     updated_at timestamp with time zone,
     deleted_at timestamp with time zone,
-    account_id bigint,
+    account_in_id bigint,
+    account_out_id bigint,
     amount bigint,
     currency text,
     date timestamp with time zone,
@@ -180,7 +181,7 @@ COPY public.convos (id, created_at, updated_at, deleted_at, user_id, expect, con
 -- Data for Name: records; Type: TABLE DATA; Schema: public; Owner: airstrip
 --
 
-COPY public.records (id, created_at, updated_at, deleted_at, account_id, amount, currency, date, description, form, from_date, till_date, type, user_id) FROM stdin;
+COPY public.records (id, created_at, updated_at, deleted_at, account_in_id, account_out_id, amount, currency, date, description, form, from_date, till_date, type, user_id) FROM stdin;
 \.
 
 
@@ -251,11 +252,19 @@ CREATE INDEX idx_records_deleted_at ON public.records USING btree (deleted_at);
 
 
 --
--- Name: records fk_records_account; Type: FK CONSTRAINT; Schema: public; Owner: airstrip
+-- Name: records fk_records_account_in; Type: FK CONSTRAINT; Schema: public; Owner: airstrip
 --
 
 ALTER TABLE ONLY public.records
-    ADD CONSTRAINT fk_records_account FOREIGN KEY (account_id) REFERENCES public.accounts(id);
+    ADD CONSTRAINT fk_records_account_in FOREIGN KEY (account_in_id) REFERENCES public.accounts(id);
+
+
+--
+-- Name: records fk_records_account_out; Type: FK CONSTRAINT; Schema: public; Owner: airstrip
+--
+
+ALTER TABLE ONLY public.records
+    ADD CONSTRAINT fk_records_account_out FOREIGN KEY (account_out_id) REFERENCES public.accounts(id);
 
 
 --
