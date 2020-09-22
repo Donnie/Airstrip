@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Donnie/Airstrip/ptr"
-	"github.com/araddon/dateparse"
+	"github.com/jinzhu/now"
 	"gorm.io/gorm"
 )
 
@@ -108,10 +108,11 @@ func (convo *Convo) expectAmount(db *gorm.DB, input string) {
 }
 
 func (convo *Convo) expectDate(db *gorm.DB, input string) {
-	dateTime, err := dateparse.ParseAny(input)
-	if err != nil {
+	dateTime := convo.parseDate(input)
+	if dateTime.IsZero() {
 		return
 	}
+
 	db.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("date", dateTime)
 	convo.Expect = nil
 }
@@ -139,7 +140,7 @@ func (convo *Convo) expectFromDate(db *gorm.DB, input string) {
 }
 
 func (convo *Convo) expectMandate(db *gorm.DB, input string) {
-	switch strings.ToLower(input) {
+	switch input {
 	case "y":
 		db.Model(&Record{}).
 			Where("id = ?", *convo.ContextID).
@@ -167,6 +168,21 @@ func (convo *Convo) expectTillDate(db *gorm.DB, input string) {
 	convo.Expect = nil
 }
 
+func (convo *Convo) parseDate(input string) (out time.Time) {
+	input = strings.ToLower(input)
+	now.TimeFormats = append(now.TimeFormats, "Jan 2")
+
+	switch input {
+	case "now":
+		out = time.Now()
+	case "today":
+		out = now.BeginningOfDay()
+	default:
+		out, _ = now.Parse(input)
+	}
+	return
+}
+
 func genQues(ask string) (out string) {
 	switch ask {
 	case "account que":
@@ -175,6 +191,8 @@ func genQues(ask string) (out string) {
 		out = "More than one account found\\. Be more specific\\."
 	case "account name":
 		out = "What is the new account name?"
+	case "mandate":
+		out = "Is it a recurring cost?"
 	case "from date", "till date":
 		out = fmt.Sprintf("What is the %s?\n\nSpecify in this format: *_Jan 2006_*", ask)
 	default:
