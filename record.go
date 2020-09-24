@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"time"
 
 	"github.com/Donnie/Airstrip/ptr"
@@ -16,7 +17,8 @@ func (st *State) handleRecord(m *tb.Message) {
 
 	// Init empty record
 	item := &Record{
-		UserID: &userID,
+		UserID:  &userID,
+		Mandate: ptr.Bool(strings.Contains(m.Text, "recur")),
 	}
 	st.Orm.Create(&item)
 

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 
 	tb "gopkg.in/tucnak/telebot.v2"
@@ -40,12 +39,8 @@ func (st *State) handleContext(sender *tb.User, input string) {
 	convo.Handle("date", convo.expectDate)
 	convo.Handle("description", convo.expectDescription)
 	convo.Handle("from date", convo.expectFromDate)
-	convo.Handle("mandate", convo.expectMandate)
 	convo.Handle("till date", convo.expectTillDate)
 	convo.expectNext(st.Orm, input)
 
-	_, err := st.Bot.Send(sender, convo.response, &convo.menu, tb.ModeMarkdownV2)
-	if err != nil {
-		fmt.Println(err)
-	}
+	st.Bot.Send(sender, convo.response, &convo.menu, tb.ModeMarkdownV2)
 }
