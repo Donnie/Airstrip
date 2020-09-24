@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -33,10 +34,12 @@ func (convo *Convo) expectNext(db *gorm.DB, expect string) {
 
 func (convo *Convo) expectAccountIn(db *gorm.DB, input string) {
 	// find out account
-	var accounts []Account
-	db.Where("name LIKE ?", fmt.Sprintf("%%%s%%", input)).Find(&accounts)
+	var account Account
+	err := db.Where("name = ?", input).
+		Where("user_id = ?", *convo.UserID).
+		First(&account).Error
 
-	if len(accounts) == 0 {
+	if err != nil || errors.Is(err, gorm.ErrRecordNotFound) {
 		convo.Expect = ptr.String("account que")
 		convo.menu.Inline(
 			convo.menu.Row(
@@ -46,30 +49,26 @@ func (convo *Convo) expectAccountIn(db *gorm.DB, input string) {
 		)
 		return
 	}
-	if len(accounts) > 1 {
-		convo.Expect = ptr.String("account choose in")
-		return
-	}
 
 	db.Model(&Record{}).
 		Where("id = ?", *convo.ContextID).
-		Update("account_in_id", accounts[0].ID)
+		Update("account_in_id", account.ID)
 	convo.Expect = ptr.String("account out")
 }
 
 func (convo *Convo) expectAccountOut(db *gorm.DB, input string) {
 	// find out account
-	var accounts []Account
-	db.Where("name LIKE ?", fmt.Sprintf("%%%s%%", input)).Find(&accounts)
+	var account Account
+	err := db.Where("name = ?", input).First(&account).Error
 
-	if len(accounts) != 1 {
+	if err != nil || errors.Is(err, gorm.ErrRecordNotFound) {
 		convo.Expect = ptr.String("account out")
 		return
 	}
 
 	db.Model(&Record{}).
 		Where("id = ?", *convo.ContextID).
-		Update("account_out_id", accounts[0].ID)
+		Update("account_out_id", account.ID)
 	convo.Expect = ptr.String("amount")
 }
 
@@ -79,6 +78,7 @@ func (convo *Convo) expectAccountQue(db *gorm.DB, input string) {
 	case "y":
 		var account Account
 		account.Name = &inp[1]
+		account.UserID = convo.UserID
 		db.Create(&account)
 
 		db.Model(&Record{}).
@@ -107,7 +107,8 @@ func (convo *Convo) expectDate(db *gorm.DB, input string) {
 		return
 	}
 
-	db.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("date", dateTime)
+	db.Model(&Record{}).Where("id = ?", *convo.ContextID).
+		Update("date", dateTime)
 	convo.Expect = nil
 }
 
