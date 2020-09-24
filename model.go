@@ -63,4 +63,5 @@ type Account struct {
 	Currency *string `json:"currency"`
 	Name     *string `json:"name"`
 	Self     *bool   `json:"self"`
+	UserID   *int    `json:"user_id"`
 }
