@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -91,13 +92,13 @@ func (convo *Convo) expectAccountQue(db *gorm.DB, input string) {
 }
 
 func (convo *Convo) expectAmount(db *gorm.DB, input string) {
-	amountFlt, err := strconv.ParseFloat(input, 64)
-	if err != nil {
+	flt, err := strconv.ParseFloat(input, 64)
+	if err != nil || flt < 0 {
 		return
 	}
 	db.Model(&Record{}).
 		Where("id = ?", *convo.ContextID).
-		Update("amount", ptr.Int64(int64(amountFlt*100)))
+		Update("amount", math.Round(flt*100))
 	convo.Expect = ptr.String("description")
 }
 
