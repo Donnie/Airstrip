@@ -9,7 +9,6 @@ import (
 
 func (st *State) handlePredict(m *tb.Message) {
 	var layout = "Jan 2006"
-	userID := int64(m.Sender.ID)
 
 	date := m.Payload
 	t, err := time.Parse(layout, date)
@@ -22,7 +21,7 @@ func (st *State) handlePredict(m *tb.Message) {
 
 	recs := []Record{}
 	st.Orm.Preload("AccountIn").Preload("AccountOut").
-		Where("user_id = ?", userID).
+		Where("user_id = ?", m.Sender.ID).
 		Find(&recs)
 
 	cashCurr := calcCurr(recs)

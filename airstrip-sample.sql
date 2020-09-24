@@ -31,7 +31,8 @@ CREATE TABLE public.accounts (
     deleted_at timestamp with time zone,
     currency text,
     name text,
-    self boolean
+    self boolean,
+    user_id bigint
 );
 
 
@@ -165,7 +166,7 @@ ALTER TABLE ONLY public.records ALTER COLUMN id SET DEFAULT nextval('public.reco
 -- Data for Name: accounts; Type: TABLE DATA; Schema: public; Owner: airstrip
 --
 
-COPY public.accounts (id, created_at, updated_at, deleted_at, currency, name, self) FROM stdin;
+COPY public.accounts (id, created_at, updated_at, deleted_at, currency, name, self, user_id) FROM stdin;
 \.
 
 
