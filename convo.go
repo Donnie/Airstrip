@@ -98,13 +98,7 @@ func (convo *Convo) expectAmount(db *gorm.DB, input string) {
 	db.Model(&Record{}).
 		Where("id = ?", *convo.ContextID).
 		Update("amount", ptr.Int64(int64(amountFlt*100)))
-	convo.Expect = ptr.String("mandate")
-	convo.menu.Inline(
-		convo.menu.Row(
-			convo.menu.Data("Yes", "y"),
-			convo.menu.Data("No", "n"),
-		),
-	)
+	convo.Expect = ptr.String("description")
 }
 
 func (convo *Convo) expectDate(db *gorm.DB, input string) {
@@ -137,20 +131,6 @@ func (convo *Convo) expectFromDate(db *gorm.DB, input string) {
 	}
 	db.Model(&Record{}).Where("id = ?", *convo.ContextID).Update("from_date", dateTime)
 	convo.Expect = ptr.String("till date")
-}
-
-func (convo *Convo) expectMandate(db *gorm.DB, input string) {
-	switch input {
-	case "y":
-		db.Model(&Record{}).
-			Where("id = ?", *convo.ContextID).
-			Update("mandate", true)
-	default:
-		db.Model(&Record{}).
-			Where("id = ?", *convo.ContextID).
-			Update("mandate", false)
-	}
-	convo.Expect = ptr.String("description")
 }
 
 func (convo *Convo) expectTillDate(db *gorm.DB, input string) {
@@ -191,8 +171,6 @@ func genQues(ask string) (out string) {
 		out = "More than one account found\\. Be more specific\\."
 	case "account name":
 		out = "What is the new account name?"
-	case "mandate":
-		out = "Is it a recurring cost?"
 	case "from date", "till date":
 		out = fmt.Sprintf("What is the %s?\n\nSpecify in this format: *_Jan 2006_*", ask)
 	default:
