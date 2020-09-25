@@ -68,10 +68,9 @@ type Account struct {
 
 // Line is a transaction description
 type Line struct {
-	Amount    float64
-	Name      string
-	Statement string
-	Type      string
+	Amount float64
+	Name   string
+	Type   string
 }
 
 // View consists of lines
