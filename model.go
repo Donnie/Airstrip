@@ -65,3 +65,17 @@ type Account struct {
 	Self     *bool   `json:"self"`
 	UserID   *int    `json:"user_id"`
 }
+
+// Line is a transaction description
+type Line struct {
+	Amount float64
+	Name   string
+	Type   string
+}
+
+// View consists of lines
+type View struct {
+	Lines []Line
+	Total float64
+	Type  string
+}
