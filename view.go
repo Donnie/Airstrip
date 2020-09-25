@@ -14,65 +14,62 @@ func (st *State) handleView(m *tb.Message) {
 		t = time.Now()
 	}
 
-	recs := []Record{}
-	st.Orm.Preload("AccountIn").
-		Where(
-			st.Orm.Where("(?::date BETWEEN from_date AND till_date)", t).
-				Or("(?::date >= from_date AND till_date IS NULL)", t),
-		).
-		Or(
-			st.Orm.Where("EXTRACT(MONTH FROM date) = ?", int(t.Month())).
-				Where("EXTRACT(YEAR FROM date) = ?", t.Year()),
-		).
-		Find(&recs)
+	var lines []Line
+	st.Orm.Raw(`SELECT ai.name, CAST(r.amount AS DOUBLE PRECISION)/100 AS amount, (
+		CASE
+		WHEN ai.self AND ao.self THEN 'Transfers' 
+		WHEN r.mandate = false AND ai.self = false THEN 'Expenses' 
+		WHEN r.mandate = false AND ai.self THEN 'Gains' 
+		WHEN r.mandate AND ai.self THEN 'Incomes' 
+		WHEN r.mandate AND ai.self = false THEN 'Charges'
+		END
+	) as type 
+	FROM records AS r 
+	JOIN accounts AS ai ON r.account_in_id = ai.id 
+	JOIN accounts AS ao ON r.account_out_id = ao.id 
+	WHERE (
+		(
+			(
+				?::date BETWEEN r.from_date AND r.till_date 
+				OR
+				?::date >= r.from_date AND r.till_date IS NULL
+			) OR (
+				EXTRACT(MONTH FROM date) = ? 
+				AND
+				EXTRACT(YEAR FROM date) = ?
+			)
+		)
+		AND r.user_id = ?
+	)`, t, t, int(t.Month()), t.Year(), m.Sender.ID).Scan(&lines)
 
 	output := fmt.Sprintf("*Overview of %s*\n", t.Format(layout))
-	output += prepareView(recs)
+	output += prepareView(viewLines(lines))
 
 	st.Bot.Send(m.Sender, output, tb.ModeMarkdown)
 }
 
-func prepareView(recs []Record) (output string) {
-	var expenses, gains, incomes, charges []string
-
-	for _, rec := range recs {
-		switch *rec.AccountIn.Self {
-		case true:
-			switch *rec.Mandate {
-			case true:
-				incomes = append(incomes, fmt.Sprintf("`%s %d %s`\n", *rec.AccountIn.Name, *rec.Amount/100, *rec.AccountIn.Currency))
-			case false:
-				gains = append(gains, fmt.Sprintf("`%s %d %s`\n", *rec.AccountIn.Name, *rec.Amount/100, *rec.AccountIn.Currency))
-			}
-		case false:
-			switch *rec.Mandate {
-			case true:
-				charges = append(charges, fmt.Sprintf("`%s %d %s`\n", *rec.AccountIn.Name, *rec.Amount/100, *rec.AccountIn.Currency))
-			case false:
-				expenses = append(expenses, fmt.Sprintf("`%s %d %s`\n", *rec.AccountIn.Name, *rec.Amount/100, *rec.AccountIn.Currency))
+func viewLines(lines []Line) (views [4]View) {
+	views[0].Type = "Expenses"
+	views[1].Type = "Gains"
+	views[2].Type = "Incomes"
+	views[3].Type = "Charges"
+	for _, rec := range lines {
+		for i := range views {
+			if rec.Type == views[i].Type {
+				views[i].Lines = append(views[i].Lines, rec)
+				views[i].Total += rec.Amount
 			}
 		}
 	}
+	return
+}
 
-	output += "\n*Expenses*\n"
-	for _, item := range expenses {
-		output += item
+func prepareView(views [4]View) (out string) {
+	for _, view := range views {
+		out += fmt.Sprintf("\n*%s*: `%.2f` EUR\n", view.Type, view.Total)
+		for _, line := range view.Lines {
+			out += fmt.Sprintf("`%s: `%.2f` EUR`\n", line.Name, line.Amount)
+		}
 	}
-
-	output += "\n*Gains*\n"
-	for _, item := range gains {
-		output += item
-	}
-
-	output += "\n*Incomes*\n"
-	for _, item := range incomes {
-		output += item
-	}
-
-	output += "\n*Charges*\n"
-	for _, item := range charges {
-		output += item
-	}
-
 	return
 }
