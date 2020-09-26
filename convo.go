@@ -152,6 +152,7 @@ func (convo *Convo) expectTillDate(db *gorm.DB, input string) {
 
 func (convo *Convo) parseDate(input string) (out time.Time) {
 	input = strings.ToLower(input)
+	now.TimeFormats = append(now.TimeFormats, "2 Jan")
 	now.TimeFormats = append(now.TimeFormats, "Jan 2")
 
 	switch input {
@@ -159,6 +160,8 @@ func (convo *Convo) parseDate(input string) (out time.Time) {
 		out = time.Now()
 	case "today":
 		out = now.BeginningOfDay()
+	case "yday", "y'day", "yesterday":
+		out = now.BeginningOfDay().AddDate(0, 0, -1)
 	default:
 		out, _ = now.Parse(input)
 	}
