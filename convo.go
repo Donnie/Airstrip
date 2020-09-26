@@ -98,7 +98,7 @@ func (convo *Convo) expectAmount(db *gorm.DB, input string) {
 	}
 	db.Model(&Record{}).
 		Where("id = ?", *convo.ContextID).
-		Update("amount", math.Round(flt*100))
+		Update("amount", int(math.Round(flt*100)))
 	convo.Expect = ptr.String("description")
 }
 
