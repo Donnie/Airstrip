@@ -77,7 +77,9 @@ func (convo *Convo) expectAccountQue(db *gorm.DB, input string) {
 	switch strings.ToLower(inp[0]) {
 	case "y":
 		var account Account
+		account.Currency = ptr.String("EUR")
 		account.Name = &inp[1]
+		account.Self = ptr.Bool(false)
 		account.UserID = convo.UserID
 		db.Create(&account)
 
