@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/Donnie/Airstrip/ptr"
-	"github.com/jinzhu/now"
 	"gorm.io/gorm"
 )
 
@@ -103,7 +102,7 @@ func (convo *Convo) expectAmount(db *gorm.DB, input string) {
 }
 
 func (convo *Convo) expectDate(db *gorm.DB, input string) {
-	dateTime := convo.parseDate(input)
+	dateTime := parseDate(input)
 	if dateTime.IsZero() {
 		return
 	}
@@ -148,24 +147,6 @@ func (convo *Convo) expectTillDate(db *gorm.DB, input string) {
 	record.TillDate = &dateTime
 	db.Save(&record)
 	convo.Expect = nil
-}
-
-func (convo *Convo) parseDate(input string) (out time.Time) {
-	input = strings.ToLower(input)
-	now.TimeFormats = append(now.TimeFormats, "2 Jan")
-	now.TimeFormats = append(now.TimeFormats, "Jan 2")
-
-	switch input {
-	case "now":
-		out = time.Now()
-	case "today":
-		out = now.BeginningOfDay()
-	case "yday", "y'day", "yesterday":
-		out = now.BeginningOfDay().AddDate(0, 0, -1)
-	default:
-		out, _ = now.Parse(input)
-	}
-	return
 }
 
 func genQues(ask string) (out string) {
