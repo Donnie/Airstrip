@@ -124,6 +124,16 @@ func (convo *Convo) expectDescription(db *gorm.DB, input string) {
 		return
 	}
 	convo.Expect = ptr.String("date")
+	convo.menu.Inline(
+		convo.menu.Row(
+			convo.menu.Data("Now", "now"),
+			convo.menu.Data("Today", "today"),
+		),
+		convo.menu.Row(
+			convo.menu.Data("Yesterday", "yesterday"),
+			convo.menu.Data("Tomorrow", "tomorrow"),
+		),
+	)
 }
 
 func (convo *Convo) expectFromDate(db *gorm.DB, input string) {
