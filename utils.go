@@ -19,6 +19,8 @@ func parseDate(input string) (out time.Time) {
 		out = now.BeginningOfDay()
 	case "yday", "y'day", "yesterday":
 		out = now.BeginningOfDay().AddDate(0, 0, -1)
+	case "tomm", "tomorrow":
+		out = now.BeginningOfDay().AddDate(0, 0, 1)
 	default:
 		out, _ = now.Parse(input)
 	}
