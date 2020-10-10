@@ -25,7 +25,7 @@ func (st *State) handlePredict(m *tb.Message) {
 		Find(&recs)
 
 	cashCurr := st.CashTillNow(m.Sender.ID)
-	costPlan := plannedExp(recs)
+	costPlan := st.PlannedExpensesCurrentMonth(m.Sender.ID)
 	cashFutr := calcFutr(t, recs)
 
 	output := fmt.Sprintf("*Prediction* for month end %s:\n%d EUR", t.Format(layout), (cashCurr-costPlan+cashFutr)/100)
@@ -53,36 +53,48 @@ func (st *State) CashTillNow(userID int) int64 {
 	return res.Sum
 }
 
-func plannedExp(recs []Record) (cash int64) {
-	// get current month expenses
-	currExp := []Record{}
-	for _, rec := range recs {
-		if rec.isExpense() && rec.isCurrent() {
-			currExp = append(currExp, rec)
-		}
+// PlannedExpensesCurrentMonth calculates remaining expenses for current month
+func (st *State) PlannedExpensesCurrentMonth(userID int) int64 {
+	var res struct {
+		Sum int64
 	}
+	t := time.Now()
 
-	// get current month charges
-	currChg := []Record{}
-	for _, rec := range recs {
-		if rec.isCharge() && rec.isCurrent() {
-			currChg = append(currChg, rec)
-		}
-	}
+	st.Orm.Raw(`SELECT SUM(charge - expense) AS sum FROM (
+		SELECT ac.name,
+		COALESCE((
+			SELECT SUM(r1.amount) 
+			FROM records AS r1
+			WHERE (
+				(
+					?::date BETWEEN r1.from_date AND r1.till_date 
+					OR
+					?::date >= r1.from_date AND r1.till_date IS NULL
+				)
+				AND r1.account_in_id = ac.id
+				AND r1.mandate = true
+			)
+		), 0) AS charge,
+		COALESCE((
+			SELECT SUM(r1.amount) 
+			FROM records AS r1
+			WHERE (
+				(
+					EXTRACT(MONTH FROM date) = ? 
+					AND
+					EXTRACT(YEAR FROM date) = ?
+				)
+				AND r1.account_in_id = ac.id
+				AND r1.mandate = false
+			)
+		), 0) AS expense
+		FROM accounts AS ac
+		WHERE ac.user_id = ? 
+		AND ac.self = false
+	) AS planned
+	WHERE charge-expense > 0`, t, t, int(t.Month()), t.Year(), userID).Scan(&res)
 
-	// find diff
-	for _, chg := range currChg {
-		tobespent := *chg.Amount
-		for _, exp := range currExp {
-			if *exp.AccountInID == *chg.AccountInID {
-				tobespent -= *exp.Amount
-			}
-		}
-		if tobespent > 0 {
-			cash += tobespent
-		}
-	}
-	return
+	return res.Sum
 }
 
 func calcFutr(future time.Time, recs []Record) (cash int64) {
