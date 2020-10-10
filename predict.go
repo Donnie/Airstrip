@@ -9,20 +9,10 @@ import (
 
 func (st *State) handlePredict(m *tb.Message) {
 	var layout = "Jan 2006"
-
-	date := m.Payload
-	t, err := time.Parse(layout, date)
+	t, err := time.Parse(layout, m.Payload)
 	if err != nil {
 		t = time.Now().AddDate(1, 0, 0)
-	} else {
-		// end of the month
-		t = t.AddDate(0, 1, -1)
 	}
-
-	recs := []Record{}
-	st.Orm.Preload("AccountIn").Preload("AccountOut").
-		Where("user_id = ?", m.Sender.ID).
-		Find(&recs)
 
 	cashCurr := st.CashTillNow(m.Sender.ID)
 	costPlan := st.PlannedExpensesCurrentMonth(m.Sender.ID)
@@ -33,9 +23,9 @@ func (st *State) handlePredict(m *tb.Message) {
 }
 
 // CashTillNow calculates Summation of all assets till now
-func (st *State) CashTillNow(userID int) int64 {
+func (st *State) CashTillNow(userID int) int {
 	var res struct {
-		Sum int64
+		Sum int
 	}
 
 	st.Orm.Raw(`SELECT SUM(
@@ -54,9 +44,9 @@ func (st *State) CashTillNow(userID int) int64 {
 }
 
 // PlannedExpensesCurrentMonth calculates remaining expenses for current month
-func (st *State) PlannedExpensesCurrentMonth(userID int) int64 {
+func (st *State) PlannedExpensesCurrentMonth(userID int) int {
 	var res struct {
-		Sum int64
+		Sum int
 	}
 	t := time.Now()
 
@@ -98,9 +88,9 @@ func (st *State) PlannedExpensesCurrentMonth(userID int) int64 {
 }
 
 // FutureSavings calculates savings till a future date
-func (st *State) FutureSavings(userID int, fut time.Time) int64 {
+func (st *State) FutureSavings(userID int, fut time.Time) int {
 	var res struct {
-		Sum int64
+		Sum int
 	}
 
 	st.Orm.Raw(`SELECT SUM(income - charge) AS sum
@@ -141,11 +131,14 @@ func (st *State) FutureSavings(userID int, fut time.Time) int64 {
 		), 0) AS charge
 		FROM (
 			SELECT date_trunc('month', current_date)
-			+ (interval '1' month * generate_series(1, months::int)) AS month 
+			+ (INTERVAL '1 month' * generate_series(1, months::int)) AS month 
 			FROM (
-				SELECT EXTRACT(year FROM diff)*12 + EXTRACT(month FROM diff) AS months 
+				SELECT EXTRACT(year FROM diff) * 12 + EXTRACT(month FROM diff) AS months 
 				FROM (
-					SELECT age(?, current_timestamp) AS diff
+					SELECT age(
+						date_trunc('month', CAST(? AS TIMESTAMP)) + INTERVAL '1 month - 1 day',
+						current_timestamp
+					) AS diff
 				) AS fut
 			) AS reps
 		) AS future
