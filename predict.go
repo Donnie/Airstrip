@@ -9,109 +9,140 @@ import (
 
 func (st *State) handlePredict(m *tb.Message) {
 	var layout = "Jan 2006"
-
-	date := m.Payload
-	t, err := time.Parse(layout, date)
+	t, err := time.Parse(layout, m.Payload)
 	if err != nil {
 		t = time.Now().AddDate(1, 0, 0)
-	} else {
-		// end of the month
-		t = t.AddDate(0, 1, -1)
 	}
 
-	recs := []Record{}
-	st.Orm.Preload("AccountIn").Preload("AccountOut").
-		Where("user_id = ?", m.Sender.ID).
-		Find(&recs)
-
-	cashCurr := calcCurr(recs)
-	costPlan := plannedExp(recs)
-	cashFutr := calcFutr(t, recs)
+	cashCurr := st.CashTillNow(m.Sender.ID)
+	costPlan := st.PlannedExpensesCurrentMonth(m.Sender.ID)
+	cashFutr := st.FutureSavings(m.Sender.ID, t)
 
 	output := fmt.Sprintf("*Prediction* for month end %s:\n%d EUR", t.Format(layout), (cashCurr-costPlan+cashFutr)/100)
 	st.Bot.Send(m.Sender, output, tb.ModeMarkdown)
 }
 
-func calcCurr(recs []Record) (cash int64) {
-	for _, rec := range recs {
-		if rec.isExpense() {
-			cash -= *rec.Amount
-			continue
-		}
-		if rec.isGain() {
-			cash += *rec.Amount
-		}
+// CashTillNow calculates Summation of all assets till now
+func (st *State) CashTillNow(userID int) int {
+	var res struct {
+		Sum int
 	}
-	return
+
+	st.Orm.Raw(`SELECT SUM(
+		CASE 
+		WHEN ao.self AND ai.self = false THEN amount * -1 
+		WHEN ai.self AND ao.self = false THEN amount * 1 
+		END
+	)
+	FROM records AS r 
+	JOIN accounts AS ai ON r.account_in_id = ai.id 
+	JOIN accounts AS ao ON r.account_out_id = ao.id 
+	WHERE r.mandate = false 
+	AND r.user_id = ?`, userID).Scan(&res)
+
+	return res.Sum
 }
 
-func plannedExp(recs []Record) (cash int64) {
-	// get current month expenses
-	currExp := []Record{}
-	for _, rec := range recs {
-		if rec.isExpense() && rec.isCurrent() {
-			currExp = append(currExp, rec)
-		}
+// PlannedExpensesCurrentMonth calculates remaining expenses for current month
+func (st *State) PlannedExpensesCurrentMonth(userID int) int {
+	var res struct {
+		Sum int
 	}
+	t := time.Now()
 
-	// get current month charges
-	currChg := []Record{}
-	for _, rec := range recs {
-		if rec.isCharge() && rec.isCurrent() {
-			currChg = append(currChg, rec)
-		}
-	}
+	st.Orm.Raw(`SELECT SUM(charge - expense) AS sum FROM (
+		SELECT ac.name,
+		COALESCE((
+			SELECT SUM(r1.amount) 
+			FROM records AS r1
+			WHERE (
+				(
+					?::date BETWEEN r1.from_date AND r1.till_date 
+					OR
+					?::date >= r1.from_date AND r1.till_date IS NULL
+				)
+				AND r1.account_in_id = ac.id
+				AND r1.mandate = true
+			)
+		), 0) AS charge,
+		COALESCE((
+			SELECT SUM(r1.amount) 
+			FROM records AS r1
+			WHERE (
+				(
+					EXTRACT(MONTH FROM date) = ? 
+					AND
+					EXTRACT(YEAR FROM date) = ?
+				)
+				AND r1.account_in_id = ac.id
+				AND r1.mandate = false
+			)
+		), 0) AS expense
+		FROM accounts AS ac
+		WHERE ac.user_id = ? 
+		AND ac.self = false
+	) AS planned
+	WHERE charge-expense > 0`, t, t, int(t.Month()), t.Year(), userID).Scan(&res)
 
-	// find diff
-	for _, chg := range currChg {
-		tobespent := *chg.Amount
-		for _, exp := range currExp {
-			if *exp.AccountInID == *chg.AccountInID {
-				tobespent -= *exp.Amount
-			}
-		}
-		if tobespent > 0 {
-			cash += tobespent
-		}
-	}
-	return
+	return res.Sum
 }
 
-func calcFutr(future time.Time, recs []Record) (cash int64) {
-	timeNow := time.Now().AddDate(0, 1, 0)
-	reps := monthDiff(timeNow, future)
-	if reps > 0 {
-		for i := 0; i < reps; i++ {
-			cash += calcMonthEnd(recs, timeNow.AddDate(0, i, 0))
-		}
+// FutureSavings calculates savings till a future date
+func (st *State) FutureSavings(userID int, fut time.Time) int {
+	var res struct {
+		Sum int
 	}
-	return
-}
 
-func calcMonthEnd(recs []Record, month time.Time) (cash int64) {
-	for _, rec := range recs {
-		if rec.isIncome() && rec.isOfMonth(month) {
-			cash += *rec.Amount
-			continue
-		}
-		if rec.isCharge() && rec.isOfMonth(month) {
-			cash -= *rec.Amount
-		}
-	}
-	return
-}
+	st.Orm.Raw(`SELECT SUM(income - charge) AS sum
+	FROM (
+		SELECT future.month, COALESCE((
+			SELECT SUM(r1.amount) 
+			FROM records AS r1
+			JOIN accounts AS ai1 ON r1.account_in_id = ai1.id 
+			JOIN accounts AS ao1 ON r1.account_out_id = ao1.id 
+			WHERE (
+				(
+					future.month::date BETWEEN r1.from_date AND r1.till_date 
+					OR
+					future.month::date >= r1.from_date AND r1.till_date IS NULL
+				)
+				AND r1.mandate
+				AND ao1.self = false
+				AND ai1.self
+				AND r1.user_id = ?
+			)
+		), 0) AS income, 
+		COALESCE((
+			SELECT SUM(r1.amount) 
+			FROM records AS r1
+			JOIN accounts AS ai1 ON r1.account_in_id = ai1.id 
+			JOIN accounts AS ao1 ON r1.account_out_id = ao1.id 
+			WHERE (
+				(
+					future.month::date BETWEEN r1.from_date AND r1.till_date 
+					OR
+					future.month::date >= r1.from_date AND r1.till_date IS NULL
+				)
+				AND r1.mandate
+				AND ao1.self
+				AND ai1.self = false
+				AND r1.user_id = ?
+			)
+		), 0) AS charge
+		FROM (
+			SELECT date_trunc('month', current_date)
+			+ (INTERVAL '1 month' * generate_series(1, months::int)) AS month 
+			FROM (
+				SELECT EXTRACT(year FROM diff) * 12 + EXTRACT(month FROM diff) AS months 
+				FROM (
+					SELECT age(
+						date_trunc('month', CAST(? AS TIMESTAMP)) + INTERVAL '1 month - 1 day',
+						current_timestamp
+					) AS diff
+				) AS fut
+			) AS reps
+		) AS future
+	) AS savings`, userID, userID, fut).Scan(&res)
 
-func monthDiff(a, b time.Time) (month int) {
-	if a.Location() != b.Location() {
-		b = b.In(a.Location())
-	}
-	y1, m1, _ := a.Date()
-	y2, m2, _ := b.Date()
-
-	month = int(m2 - m1 + 1)
-	year := int(y2 - y1)
-
-	month += (year * 12)
-
-	return
+	return res.Sum
 }
