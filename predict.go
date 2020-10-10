@@ -24,7 +24,7 @@ func (st *State) handlePredict(m *tb.Message) {
 		Where("user_id = ?", m.Sender.ID).
 		Find(&recs)
 
-	cashCurr := calcCurr(recs)
+	cashCurr := st.CashTillNow(m.Sender.ID)
 	costPlan := plannedExp(recs)
 	cashFutr := calcFutr(t, recs)
 
@@ -32,17 +32,25 @@ func (st *State) handlePredict(m *tb.Message) {
 	st.Bot.Send(m.Sender, output, tb.ModeMarkdown)
 }
 
-func calcCurr(recs []Record) (cash int64) {
-	for _, rec := range recs {
-		if rec.isExpense() {
-			cash -= *rec.Amount
-			continue
-		}
-		if rec.isGain() {
-			cash += *rec.Amount
-		}
+// CashTillNow calculates Summation of all assets till now
+func (st *State) CashTillNow(userID int) int64 {
+	var res struct {
+		Sum int64
 	}
-	return
+
+	st.Orm.Raw(`SELECT SUM(
+		CASE 
+		WHEN ao.self AND ai.self = false THEN amount * -1 
+		WHEN ai.self AND ao.self = false THEN amount * 1 
+		END
+	)
+	FROM records AS r 
+	JOIN accounts AS ai ON r.account_in_id = ai.id 
+	JOIN accounts AS ao ON r.account_out_id = ao.id 
+	WHERE r.mandate = false 
+	AND r.user_id = ?`, userID).Scan(&res)
+
+	return res.Sum
 }
 
 func plannedExp(recs []Record) (cash int64) {
