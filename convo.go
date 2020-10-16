@@ -69,7 +69,7 @@ func (convo *Convo) expectAccountOut(db *gorm.DB, input string) {
 	db.Model(&Record{}).
 		Where("id = ?", *convo.ContextID).
 		Update("account_out_id", account.ID)
-	convo.Expect = ptr.String("amount")
+	convo.Expect = ptr.String("description")
 }
 
 func (convo *Convo) expectAccountQue(db *gorm.DB, input string) {
@@ -100,7 +100,7 @@ func (convo *Convo) expectAmount(db *gorm.DB, input string) {
 	db.Model(&Record{}).
 		Where("id = ?", *convo.ContextID).
 		Update("amount", int(math.Round(flt*100)))
-	convo.Expect = ptr.String("description")
+	convo.Expect = ptr.String("account in")
 }
 
 func (convo *Convo) expectDate(db *gorm.DB, input string) {

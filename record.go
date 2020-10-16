@@ -25,12 +25,12 @@ func (st *State) handleRecord(m *tb.Message) {
 	// Create new conversation with Context
 	convo := &Convo{
 		ContextID: &item.ID,
-		Expect:    ptr.String("account in"),
+		Expect:    ptr.String("amount"),
 		UserID:    &userID,
 	}
 	st.Orm.Create(&convo)
 
-	convo.response = genQues("account in")
+	convo.response = genQues("amount")
 	st.Bot.Send(m.Sender, convo.response, &convo.menu)
 }
 
