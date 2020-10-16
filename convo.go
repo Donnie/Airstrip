@@ -100,6 +100,13 @@ func (convo *Convo) expectAmount(db *gorm.DB, input string) {
 	db.Model(&Record{}).
 		Where("id = ?", *convo.ContextID).
 		Update("amount", int(math.Round(flt*100)))
+
+	var accounts []Account
+	db.Where("records.mandate = false").
+		Joins("JOIN records ON records.account_in_id = accounts.id").
+		Group("accounts.id").Order("MAX(records.date) desc, accounts.id").
+		Limit(7).Find(&accounts)
+
 	convo.Expect = ptr.String("account in")
 }
 
