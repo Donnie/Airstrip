@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Donnie/Airstrip/ptr"
+	tb "gopkg.in/tucnak/telebot.v2"
 	"gorm.io/gorm"
 )
 
@@ -107,6 +108,19 @@ func (convo *Convo) expectAmount(db *gorm.DB, input string) {
 		Group("accounts.id").Order("MAX(records.date) desc, accounts.id").
 		Limit(7).Find(&accounts)
 
+	var btns []tb.Btn
+	for i := 0; i < getMin(4, len(accounts)); i++ {
+		btns = append(btns, convo.menu.Data(*accounts[i].Name, fmt.Sprintf("%d", accounts[i].ID)))
+	}
+	rowOne := convo.menu.Row(btns...)
+
+	btns = []tb.Btn{}
+	for i := 4; i < getMin(7, len(accounts)); i++ {
+		btns = append(btns, convo.menu.Data(*accounts[i].Name, fmt.Sprintf("%d", accounts[i].ID)))
+	}
+	rowTwo := convo.menu.Row(btns...)
+
+	convo.menu.Inline(rowOne, rowTwo)
 	convo.Expect = ptr.String("account in")
 }
 
