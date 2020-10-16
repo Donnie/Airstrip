@@ -34,6 +34,14 @@ func (convo *Convo) expectNext(db *gorm.DB, expect string) {
 }
 
 func (convo *Convo) expectAccountIn(db *gorm.DB, input string) {
+	if strings.Contains(input, "more") {
+		inp := strings.Split(input, "-")
+		start, _ := strconv.Atoi(inp[1])
+		convo.getRecentAccountBtns(db, start, "in")
+		convo.Expect = ptr.String("account in")
+		return
+	}
+
 	// find out account
 	var account Account
 	err := db.Where("name = ?", input).
@@ -54,15 +62,28 @@ func (convo *Convo) expectAccountIn(db *gorm.DB, input string) {
 	db.Model(&Record{}).
 		Where("id = ?", *convo.ContextID).
 		Update("account_in_id", account.ID)
+
+	convo.getRecentAccountBtns(db, 0, "out")
 	convo.Expect = ptr.String("account out")
 }
 
 func (convo *Convo) expectAccountOut(db *gorm.DB, input string) {
+	if strings.Contains(input, "more") {
+		inp := strings.Split(input, "-")
+		start, _ := strconv.Atoi(inp[1])
+		convo.getRecentAccountBtns(db, start, "out")
+		convo.Expect = ptr.String("account out")
+		return
+	}
+
 	// find out account
 	var account Account
-	err := db.Where("name = ?", input).First(&account).Error
+	err := db.Where("name = ?", input).
+		Where("user_id = ?", *convo.UserID).
+		First(&account).Error
 
 	if err != nil || errors.Is(err, gorm.ErrRecordNotFound) {
+		convo.getRecentAccountBtns(db, 0, "out")
 		convo.Expect = ptr.String("account out")
 		return
 	}
@@ -87,8 +108,11 @@ func (convo *Convo) expectAccountQue(db *gorm.DB, input string) {
 		db.Model(&Record{}).
 			Where("id = ?", *convo.ContextID).
 			Update("account_in_id", account.ID)
+
+		convo.getRecentAccountBtns(db, 0, "out")
 		convo.Expect = ptr.String("account out")
 	default:
+		convo.getRecentAccountBtns(db, 0, "in")
 		convo.Expect = ptr.String("account in")
 	}
 }
@@ -102,25 +126,7 @@ func (convo *Convo) expectAmount(db *gorm.DB, input string) {
 		Where("id = ?", *convo.ContextID).
 		Update("amount", int(math.Round(flt*100)))
 
-	var accounts []Account
-	db.Where("records.mandate = false").
-		Joins("JOIN records ON records.account_in_id = accounts.id").
-		Group("accounts.id").Order("MAX(records.date) desc, accounts.id").
-		Limit(7).Find(&accounts)
-
-	var btns []tb.Btn
-	for i := 0; i < getMin(4, len(accounts)); i++ {
-		btns = append(btns, convo.menu.Data(*accounts[i].Name, fmt.Sprintf("%d", accounts[i].ID)))
-	}
-	rowOne := convo.menu.Row(btns...)
-
-	btns = []tb.Btn{}
-	for i := 4; i < getMin(7, len(accounts)); i++ {
-		btns = append(btns, convo.menu.Data(*accounts[i].Name, fmt.Sprintf("%d", accounts[i].ID)))
-	}
-	rowTwo := convo.menu.Row(btns...)
-
-	convo.menu.Inline(rowOne, rowTwo)
+	convo.getRecentAccountBtns(db, 0, "in")
 	convo.Expect = ptr.String("account in")
 }
 
@@ -182,12 +188,36 @@ func (convo *Convo) expectTillDate(db *gorm.DB, input string) {
 	convo.Expect = nil
 }
 
+func (convo *Convo) getRecentAccountBtns(db *gorm.DB, start int, inOut string) {
+	var accounts []Account
+	db.Where("records.mandate = false").
+		Joins(fmt.Sprintf("JOIN records ON records.account_%s_id = accounts.id", inOut)).
+		Group("accounts.id").Order("MAX(records.date) desc, accounts.id").
+		Limit(8).Offset(start).Find(&accounts)
+
+	var btns []tb.Btn
+	for i := 0; i < getMin(4, len(accounts)); i++ {
+		btns = append(btns, convo.menu.Data(*accounts[i].Name, *accounts[i].Name))
+	}
+	rowOne := convo.menu.Row(btns...)
+
+	btns = []tb.Btn{}
+	for i := 4; i < getMin(7, len(accounts)); i++ {
+		btns = append(btns, convo.menu.Data(*accounts[i].Name, *accounts[i].Name))
+	}
+
+	if len(accounts) > 7 {
+		btns = append(btns, convo.menu.Data("More...", fmt.Sprintf("more-%d", start+7)))
+	}
+
+	rowTwo := convo.menu.Row(btns...)
+	convo.menu.Inline(rowOne, rowTwo)
+}
+
 func genQues(ask string) (out string) {
 	switch ask {
 	case "account que":
 		out = "No account found by that name\\. Create one?"
-	case "account choose in", "account choose out":
-		out = "More than one account found\\. Be more specific\\."
 	case "account name":
 		out = "What is the new account name?"
 	case "from date", "till date":
