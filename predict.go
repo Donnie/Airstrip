@@ -93,7 +93,7 @@ func (st *State) FutureSavings(userID int, fut time.Time) int {
 		Sum int
 	}
 
-	st.Orm.Raw(`SELECT SUM(income - charge) AS sum
+	st.Orm.Raw(`SELECT SUM(effect) AS sum
 	FROM (
 		SELECT future.month, COALESCE((
 			SELECT SUM(r1.amount) 
@@ -128,7 +128,8 @@ func (st *State) FutureSavings(userID int, fut time.Time) int {
 				AND ai1.self = false
 				AND r1.user_id = ?
 			)
-		), 0) AS charge
+		), 0) AS charge,
+		COALESCE((income - charge), 0) AS effect
 		FROM (
 			SELECT date_trunc('month', current_date)
 			+ (INTERVAL '1 month' * generate_series(1, months::int)) AS month 
