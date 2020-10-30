@@ -7,6 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
+var layout = "Jan 2006"
+
 // State holds fundamental items
 type State struct {
 	Bot *tb.Bot
@@ -78,4 +80,13 @@ type View struct {
 	Lines []Line
 	Total float64
 	Type  string
+}
+
+// Saving is per month net effect
+type Saving struct {
+	Month     time.Time
+	Income    int
+	Charge    int
+	Effect    int
+	NetEffect int
 }

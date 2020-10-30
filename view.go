@@ -8,7 +8,6 @@ import (
 )
 
 func (st *State) handleView(m *tb.Message) {
-	var layout = "Jan 2006"
 	t, err := time.Parse(layout, m.Payload)
 	if err != nil {
 		t = time.Now()

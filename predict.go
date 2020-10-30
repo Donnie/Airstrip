@@ -8,18 +8,13 @@ import (
 )
 
 func (st *State) handlePredict(m *tb.Message) {
-	var layout = "Jan 2006"
 	t, err := time.Parse(layout, m.Payload)
 	if err != nil {
 		t = time.Now().AddDate(1, 0, 0)
 	}
 
-	cashCurr := st.CashTillNow(m.Sender.ID)
-	costPlan := st.PlannedExpensesCurrentMonth(m.Sender.ID)
-	cashFutr := st.FutureSavings(m.Sender.ID, t)
-
-	output := fmt.Sprintf("*Prediction* for month end %s:\n%d EUR", t.Format(layout), (cashCurr-costPlan+cashFutr)/100)
-	st.Bot.Send(m.Sender, output, tb.ModeMarkdown)
+	predictions := st.Predict(t, m.Sender.ID)
+	st.Bot.Send(m.Sender, predictions, tb.ModeMarkdownV2)
 }
 
 // CashTillNow calculates Summation of all assets till now
@@ -88,27 +83,22 @@ func (st *State) PlannedExpensesCurrentMonth(userID int) int {
 }
 
 // FutureSavings calculates savings till a future date
-func (st *State) FutureSavings(userID int, fut time.Time) int {
-	var res struct {
-		Sum int
-	}
-
-	st.Orm.Raw(`SELECT SUM(income - charge) AS sum
+func (st *State) FutureSavings(userID int, fut time.Time) (savings []Saving) {
+	st.Orm.Raw(`SELECT month, income, charge, (income - charge) AS effect, SUM(income-charge) OVER (ORDER BY month) AS net_effect
 	FROM (
-		SELECT future.month, COALESCE((
+		SELECT month, COALESCE((
 			SELECT SUM(r1.amount) 
 			FROM records AS r1
 			JOIN accounts AS ai1 ON r1.account_in_id = ai1.id 
 			JOIN accounts AS ao1 ON r1.account_out_id = ao1.id 
 			WHERE (
 				(
-					future.month::date BETWEEN r1.from_date AND r1.till_date 
+					month::date BETWEEN r1.from_date AND r1.till_date 
 					OR
-					future.month::date >= r1.from_date AND r1.till_date IS NULL
+					month::date >= r1.from_date AND r1.till_date IS NULL
 				)
 				AND r1.mandate
-				AND ao1.self = false
-				AND ai1.self
+				AND ao1.self = false AND ai1.self
 				AND r1.user_id = ?
 			)
 		), 0) AS income, 
@@ -119,13 +109,12 @@ func (st *State) FutureSavings(userID int, fut time.Time) int {
 			JOIN accounts AS ao1 ON r1.account_out_id = ao1.id 
 			WHERE (
 				(
-					future.month::date BETWEEN r1.from_date AND r1.till_date 
+					month::date BETWEEN r1.from_date AND r1.till_date 
 					OR
-					future.month::date >= r1.from_date AND r1.till_date IS NULL
+					month::date >= r1.from_date AND r1.till_date IS NULL
 				)
 				AND r1.mandate
-				AND ao1.self
-				AND ai1.self = false
+				AND ao1.self AND ai1.self = false
 				AND r1.user_id = ?
 			)
 		), 0) AS charge
@@ -142,7 +131,31 @@ func (st *State) FutureSavings(userID int, fut time.Time) int {
 				) AS fut
 			) AS reps
 		) AS future
-	) AS savings`, userID, userID, fut).Scan(&res)
+	) AS savings`, userID, userID, fut).Scan(&savings)
+	return
+}
 
-	return res.Sum
+// Predict generates prediction for userID till fut
+func (st *State) Predict(fut time.Time, userID int) (out string) {
+	cash := st.CashTillNow(userID)
+	cost := st.PlannedExpensesCurrentMonth(userID)
+	monthEnd := cash - cost
+	savings := st.FutureSavings(userID, fut)
+
+	out += fmt.Sprintf("*Prediction till EOM %s*\n\n", fut.Format(layout))
+	out += fmt.Sprintf("*%s:* %d EUR\n", time.Now().Format(layout), monthEnd/100)
+	out += fmt.Sprintf("Planned Expenses: %d EUR\n", cost/100)
+	out += fmt.Sprintf("Assets: %d EUR", cash/100)
+
+	for i, save := range savings {
+		if len(savings)-i <= 12 {
+			// show only last twelve months
+			// because of telegram message size limitation
+			out += fmt.Sprintf(
+				"\n\n*%s:* %d EUR\nCharge: %d EUR\nIncome: %d EUR\nEffect: %d EUR",
+				save.Month.Format(layout), (monthEnd+save.NetEffect)/100, save.Charge/100, save.Income/100, save.Effect/100,
+			)
+		}
+	}
+	return
 }
