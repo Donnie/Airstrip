@@ -141,7 +141,6 @@ func (convo *Convo) expectDate(db *gorm.DB, input string) {
 }
 
 func (convo *Convo) expectFromDate(db *gorm.DB, input string) {
-	layout := "Jan 2006"
 	dateTime, err := time.Parse(layout, input)
 	if err != nil {
 		return
@@ -153,7 +152,6 @@ func (convo *Convo) expectFromDate(db *gorm.DB, input string) {
 }
 
 func (convo *Convo) expectTillDate(db *gorm.DB, input string) {
-	layout := "Jan 2006"
 	dateTime, err := time.Parse(layout, input)
 	if err != nil {
 		return
