@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var layout = "Jan 2006"
+var monthFormat = "Jan 2006"
 
 // State holds fundamental items
 type State struct {

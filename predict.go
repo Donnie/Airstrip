@@ -8,7 +8,7 @@ import (
 )
 
 func (st *State) handlePredict(m *tb.Message) {
-	t, err := time.Parse(layout, m.Payload)
+	t, err := time.Parse(monthFormat, m.Payload)
 	if err != nil {
 		t = time.Now().AddDate(1, 0, 0)
 	}
@@ -142,8 +142,8 @@ func (st *State) Predict(fut time.Time, userID int) (out string) {
 	monthEnd := cash - cost
 	savings := st.FutureSavings(userID, fut)
 
-	out += fmt.Sprintf("*Prediction till EOM %s*\n\n", fut.Format(layout))
-	out += fmt.Sprintf("*%s:* %d EUR\n", time.Now().Format(layout), monthEnd/100)
+	out += fmt.Sprintf("*Prediction till EOM %s*\n\n", fut.Format(monthFormat))
+	out += fmt.Sprintf("*%s:* %d EUR\n", time.Now().Format(monthFormat), monthEnd/100)
 	out += fmt.Sprintf("Planned Expenses: %d EUR\n", cost/100)
 	out += fmt.Sprintf("Assets: %d EUR", cash/100)
 
@@ -153,7 +153,7 @@ func (st *State) Predict(fut time.Time, userID int) (out string) {
 			// because of telegram message size limitation
 			out += fmt.Sprintf(
 				"\n\n*%s:* %d EUR\nCharge: %d EUR\nIncome: %d EUR\nEffect: %d EUR",
-				save.Month.Format(layout), (monthEnd+save.NetEffect)/100, save.Charge/100, save.Income/100, save.Effect/100,
+				save.Month.Format(monthFormat), (monthEnd+save.NetEffect)/100, save.Charge/100, save.Income/100, save.Effect/100,
 			)
 		}
 	}

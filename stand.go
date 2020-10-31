@@ -20,7 +20,7 @@ func (st *State) handleStand(m *tb.Message) {
 	}
 
 	if len(payload) > 1 {
-		mon, _ = time.Parse(layout, payload[1]+payload[2])
+		mon, _ = time.Parse(monthFormat, payload[1]+" "+payload[2])
 	}
 
 	var account Account

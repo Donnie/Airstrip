@@ -8,7 +8,7 @@ import (
 )
 
 func (st *State) handleView(m *tb.Message) {
-	t, err := time.Parse(layout, m.Payload)
+	t, err := time.Parse(monthFormat, m.Payload)
 	if err != nil {
 		t = time.Now()
 	}
@@ -41,7 +41,7 @@ func (st *State) handleView(m *tb.Message) {
 		AND r.user_id = ?
 	)`, t, t, int(t.Month()), t.Year(), m.Sender.ID).Scan(&lines)
 
-	output := fmt.Sprintf("*Overview of %s*\n", t.Format(layout))
+	output := fmt.Sprintf("*Overview of %s*\n", t.Format(monthFormat))
 	output += prepareView(viewLines(lines))
 
 	st.Bot.Send(m.Sender, output, tb.ModeMarkdown)
