@@ -125,8 +125,8 @@ func (st *State) FutureSavings(userID int, fut time.Time) (savings []Saving) {
 				SELECT EXTRACT(year FROM diff) * 12 + EXTRACT(month FROM diff) AS months 
 				FROM (
 					SELECT age(
-						date_trunc('month', CAST(? AS TIMESTAMP)) + INTERVAL '1 month - 1 day',
-						current_timestamp
+						date_trunc('month', CAST(? AS TIMESTAMP)),
+						date_trunc('month', current_timestamp)
 					) AS diff
 				) AS fut
 			) AS reps
