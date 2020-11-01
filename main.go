@@ -63,7 +63,10 @@ func main() {
 	sqlDB.SetMaxOpenConns(10)
 	// db.AutoMigrate(&Account{}, &Convo{}, &Record{})
 
-	bot, err := tb.NewBot(tb.Settings{Token: teleToken, Synchronous: true})
+	bot, err := tb.NewBot(tb.Settings{
+		Token:  teleToken,
+		Poller: &tb.LongPoller{Timeout: 10 * time.Second},
+	})
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -80,5 +83,4 @@ func main() {
 	}
 
 	st.startBot()
-	st.handleHook()
 }
