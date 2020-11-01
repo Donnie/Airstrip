@@ -4,14 +4,6 @@
 Personal finance management bot on Telegram
 
 ## Dev Setup
-### Webhook
-The app needs to set up a webhook for Telegram to relay updates.
-
-You can set up your webhook locally on your port using ngrok like so:
-
-```./ngrok http 8080```
-
-Copy the forwarding URL from ngrok to the .env.local file
 
 ### Start Project
 Add your Telegram bot token to the .env.local file and then
@@ -37,50 +29,29 @@ Tinker with the database
 
 ## Prod Setup
 
-### Configure Nginx on production machine
-Set up Nginx on your production machine so that the webhook URL forwards to port 1340
-
-```
-server {
-	listen 80;
-	server_name webhook.url;
-
-	location / {
-		proxy_pass http://localhost:1340;
-	}
- 
-}
-
-server {
-	listen 443 ssl;
-	server_name webhook.url;
-
-	location / {
-		proxy_pass http://localhost:1340;
-	}
-}
-```
-
 ### Configure your bot .env file
-Add your Telegram bot token, port, webhook and Postgres details to the .env file and then
+Add your Telegram bot token and Postgres details to the .env file and then
+
+### Make Live
+Update Make file `live` command with your server details and do
 
 ```make live```
 
 ## Features
-/expense Record an expense
+/record - Record an expense or gain
 
-/gain Record any receipt
+/recur - Record an income or a charge
 
-/charge Record fixed costs like rent, etc.
+/cancel - Cancel an ongoing record or recur process
 
-/income Record an income source like Salary
+/delete - Delete any record or recur
 
-/lend Lend money to someone
+/predict Jan 2025 - Get a prediction of your financial standing
 
-/loan Take a loan from someone
+/view Jan 2025 - Get a list of records pertaining to the month
 
-`/predict Jan 2025` Get a prediction for your financial standing
+/stand Account - Get a current standing of any account
 
-`/view Jan 2025` Get a list of records pertaining to the month
+/stand Account Mar 2022 - Get a month wise total effect on any account
 
-/delete Delete a record
+/help - To see this list

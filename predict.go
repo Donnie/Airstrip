@@ -8,20 +8,18 @@ import (
 )
 
 func (st *State) handlePredict(m *tb.Message) {
-	t, err := time.Parse(monthFormat, m.Payload)
+	fut, err := time.Parse(monthFormat, m.Payload)
 	if err != nil {
-		t = time.Now().AddDate(1, 0, 0)
+		fut = time.Now().AddDate(1, 0, 0)
 	}
 
-	predictions := st.Predict(t, m.Sender.ID)
+	predictions := st.Predict(fut, m.Sender.ID)
 	st.Bot.Send(m.Sender, predictions, tb.ModeMarkdownV2)
 }
 
 // CashTillNow calculates Summation of all assets till now
 func (st *State) CashTillNow(userID int) int {
-	var res struct {
-		Sum int
-	}
+	var res struct{ Sum int }
 
 	st.Orm.Raw(`SELECT SUM(
 		CASE 
@@ -38,79 +36,39 @@ func (st *State) CashTillNow(userID int) int {
 	return res.Sum
 }
 
-// PlannedExpensesCurrentMonth calculates remaining expenses for current month
-func (st *State) PlannedExpensesCurrentMonth(userID int) int {
-	var res struct {
-		Sum int
+// PlannedCurrentMonth calculates remaining costs and incomes for current month
+func (st *State) PlannedCurrentMonth(userID int, cost bool) int {
+	var res struct{ Sum int }
+	dir := "out"
+	if cost {
+		dir = "in"
 	}
-	t := time.Now()
 
-	st.Orm.Raw(`SELECT SUM(charge - expense) AS sum FROM (
-		SELECT ac.name,
-		COALESCE((
-			SELECT SUM(r1.amount) 
-			FROM records AS r1
-			WHERE (
-				(
-					?::date BETWEEN r1.from_date AND r1.till_date 
-					OR
-					?::date >= r1.from_date AND r1.till_date IS NULL
-				)
-				AND r1.account_in_id = ac.id
-				AND r1.mandate = true
-			)
-		), 0) AS charge,
-		COALESCE((
-			SELECT SUM(r1.amount) 
-			FROM records AS r1
-			WHERE (
-				(
-					EXTRACT(MONTH FROM date) = ? 
-					AND
-					EXTRACT(YEAR FROM date) = ?
-				)
-				AND r1.account_in_id = ac.id
-				AND r1.mandate = false
-			)
-		), 0) AS expense
-		FROM accounts AS ac
-		WHERE ac.user_id = ? 
-		AND ac.self = false
-	) AS planned
-	WHERE charge-expense > 0`, t, t, int(t.Month()), t.Year(), userID).Scan(&res)
-
-	return res.Sum
-}
-
-// PlannedIncomesCurrentMonth calculates remaining incomes for current month
-func (st *State) PlannedIncomesCurrentMonth(userID int) int {
-	var res struct {
-		Sum int
-	}
-	t := time.Now()
-
-	st.Orm.Raw(`
-	SELECT COALESCE(SUM(receivables - received), 0) AS sum
-	FROM (SELECT ac.name, 
-			SUM(CASE WHEN r.mandate THEN r.amount ELSE 0 END) AS receivables, 
-			SUM(CASE WHEN r.mandate THEN 0 ELSE r.amount END) AS received
-		FROM accounts AS ac 
-		JOIN records AS r 
-			ON r.account_out_id = ac.id 
-			AND (
-				(
-					?::date BETWEEN r.from_date AND r.till_date
-					OR ?::date >= r.from_date AND r.till_date IS NULL
-				) OR (
-					EXTRACT(MONTH FROM date) = ? 
-					AND EXTRACT(YEAR FROM date) = ?
-				)
-			) 
-		WHERE ac.self = false GROUP BY ac.id
-	) AS planned
-	WHERE receivables-received > 0
-	`, t, t, int(t.Month()), t.Year(), userID).Scan(&res)
-
+	query := fmt.Sprintf(
+		`SELECT COALESCE(SUM(target - current), 0) AS sum 
+		FROM (SELECT ac.name, 
+				SUM(CASE WHEN r.mandate THEN r.amount ELSE 0 END) AS target, 
+				SUM(CASE WHEN r.mandate THEN 0 ELSE r.amount END) AS current
+			FROM accounts AS ac 
+			JOIN records AS r 
+				ON r.account_%s_id = ac.id 
+				AND (
+					(
+						CURRENT_TIMESTAMP BETWEEN r.from_date AND r.till_date
+						OR CURRENT_TIMESTAMP >= r.from_date AND r.till_date IS NULL
+					) OR (
+						DATE_PART('month', date) = DATE_PART('month', CURRENT_TIMESTAMP)
+						AND DATE_PART('year', date) = DATE_PART('month', CURRENT_TIMESTAMP)
+					)
+				) 
+			WHERE ac.self = false
+			AND ac.user_id = %d
+			GROUP BY ac.id
+		) AS planned
+		WHERE target > current`,
+		dir, userID,
+	)
+	st.Orm.Raw(query).Scan(&res)
 	return res.Sum
 }
 
@@ -170,8 +128,8 @@ func (st *State) FutureSavings(userID int, fut time.Time) (savings []Saving) {
 // Predict generates prediction for userID till fut
 func (st *State) Predict(fut time.Time, userID int) (out string) {
 	cash := st.CashTillNow(userID)
-	cost := st.PlannedExpensesCurrentMonth(userID)
-	income := st.PlannedIncomesCurrentMonth(userID)
+	cost := st.PlannedCurrentMonth(userID, true)
+	income := st.PlannedCurrentMonth(userID, false)
 	monthEnd := cash - cost + income
 	savings := st.FutureSavings(userID, fut)
 
