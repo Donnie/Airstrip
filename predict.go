@@ -82,6 +82,38 @@ func (st *State) PlannedExpensesCurrentMonth(userID int) int {
 	return res.Sum
 }
 
+// PlannedIncomesCurrentMonth calculates remaining incomes for current month
+func (st *State) PlannedIncomesCurrentMonth(userID int) int {
+	var res struct {
+		Sum int
+	}
+	t := time.Now()
+
+	st.Orm.Raw(`
+	SELECT COALESCE(SUM(receivables - received), 0) AS sum
+	FROM (SELECT ac.name, 
+			SUM(CASE WHEN r.mandate THEN r.amount ELSE 0 END) AS receivables, 
+			SUM(CASE WHEN r.mandate THEN 0 ELSE r.amount END) AS received
+		FROM accounts AS ac 
+		JOIN records AS r 
+			ON r.account_out_id = ac.id 
+			AND (
+				(
+					?::date BETWEEN r.from_date AND r.till_date
+					OR ?::date >= r.from_date AND r.till_date IS NULL
+				) OR (
+					EXTRACT(MONTH FROM date) = ? 
+					AND EXTRACT(YEAR FROM date) = ?
+				)
+			) 
+		WHERE ac.self = false GROUP BY ac.id
+	) AS planned
+	WHERE receivables-received > 0
+	`, t, t, int(t.Month()), t.Year(), userID).Scan(&res)
+
+	return res.Sum
+}
+
 // FutureSavings calculates savings till a future date
 func (st *State) FutureSavings(userID int, fut time.Time) (savings []Saving) {
 	st.Orm.Raw(`SELECT month, income, charge, (income - charge) AS effect, SUM(income-charge) OVER (ORDER BY month) AS net_effect
@@ -139,12 +171,14 @@ func (st *State) FutureSavings(userID int, fut time.Time) (savings []Saving) {
 func (st *State) Predict(fut time.Time, userID int) (out string) {
 	cash := st.CashTillNow(userID)
 	cost := st.PlannedExpensesCurrentMonth(userID)
-	monthEnd := cash - cost
+	income := st.PlannedIncomesCurrentMonth(userID)
+	monthEnd := cash - cost + income
 	savings := st.FutureSavings(userID, fut)
 
 	out += fmt.Sprintf("*Prediction till EOM %s*\n\n", fut.Format(monthFormat))
 	out += fmt.Sprintf("*%s:* %d EUR\n", time.Now().Format(monthFormat), monthEnd/100)
 	out += fmt.Sprintf("Planned Expenses: %d EUR\n", cost/100)
+	out += fmt.Sprintf("Receivables: %d EUR\n", income/100)
 	out += fmt.Sprintf("Assets: %d EUR", cash/100)
 
 	for i, save := range savings {
