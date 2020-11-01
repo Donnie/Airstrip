@@ -34,6 +34,6 @@ live:
 	- ssh root@vultr docker stop airstrip
 	- ssh root@vultr docker rm airstrip
 	scp -r ./.env root@vultr:/root/
-	ssh root@vultr docker run -d --restart on-failure --env-file /root/.env -p 1340:8080 --name airstrip donnieashok/airstrip:prod
+	ssh root@vultr docker run -d --restart on-failure --env-file /root/.env --name airstrip donnieashok/airstrip:prod
 	ssh root@vultr rm /root/.env
 	@echo "Is live"
