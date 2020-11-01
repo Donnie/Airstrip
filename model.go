@@ -18,9 +18,7 @@ type State struct {
 
 // Env to hold env vars
 type Env struct {
-	PORT      string
 	TELETOKEN string
-	WEBHOOK   string
 }
 
 // Record represents one Record

@@ -33,18 +33,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	port, exists := os.LookupEnv("PORT")
-	if !exists {
-		fmt.Println("Add PORT to .env file")
-		os.Exit(1)
-	}
-
-	webhook, exists := os.LookupEnv("WEBHOOK")
-	if !exists {
-		fmt.Println("Add WEBHOOK to .env file")
-		os.Exit(1)
-	}
-
 	dsn := fmt.Sprintf(
 		"user=%s password=%s dbname=%s port=%s host=%s",
 		os.Getenv("PG_USER"),
@@ -76,9 +64,7 @@ func main() {
 		Bot: bot,
 		Orm: db,
 		Env: &Env{
-			PORT:      port,
 			TELETOKEN: teleToken,
-			WEBHOOK:   webhook,
 		},
 	}
 
