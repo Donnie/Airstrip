@@ -33,18 +33,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	port, exists := os.LookupEnv("PORT")
-	if !exists {
-		fmt.Println("Add PORT to .env file")
-		os.Exit(1)
-	}
-
-	webhook, exists := os.LookupEnv("WEBHOOK")
-	if !exists {
-		fmt.Println("Add WEBHOOK to .env file")
-		os.Exit(1)
-	}
-
 	dsn := fmt.Sprintf(
 		"user=%s password=%s dbname=%s port=%s host=%s",
 		os.Getenv("PG_USER"),
@@ -63,7 +51,10 @@ func main() {
 	sqlDB.SetMaxOpenConns(10)
 	// db.AutoMigrate(&Account{}, &Convo{}, &Record{})
 
-	bot, err := tb.NewBot(tb.Settings{Token: teleToken, Synchronous: true})
+	bot, err := tb.NewBot(tb.Settings{
+		Token:  teleToken,
+		Poller: &tb.LongPoller{Timeout: 10 * time.Second},
+	})
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -73,12 +64,9 @@ func main() {
 		Bot: bot,
 		Orm: db,
 		Env: &Env{
-			PORT:      port,
 			TELETOKEN: teleToken,
-			WEBHOOK:   webhook,
 		},
 	}
 
 	st.startBot()
-	st.handleHook()
 }
