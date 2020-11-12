@@ -49,7 +49,7 @@ func main() {
 	sqlDB, err := db.DB()
 	sqlDB.SetConnMaxLifetime(time.Hour)
 	sqlDB.SetMaxOpenConns(10)
-	// db.AutoMigrate(&Account{}, &Convo{}, &Record{})
+	migrateUp()
 
 	bot, err := tb.NewBot(tb.Settings{
 		Token:  teleToken,
