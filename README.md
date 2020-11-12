@@ -12,21 +12,6 @@ Add your Telegram bot token to the .env.local file and then
 
 ```make dev```
 
-### Migrate
-Copy `airstrip-sample.sql` to `airstrip.sql` and then
-
-```make migrate```
-
-### Dump
-Get a Postgres dump in `airstrip.sql` file
-
-```make dump```
-
-### Postgres Terminal
-Tinker with the database
-
-```make sql```
-
 ## Prod Setup
 
 ### Configure your bot .env file
@@ -36,6 +21,22 @@ Add your Telegram bot token and Postgres details to the .env file and then
 Update Make file `live` command with your server details and do
 
 ```make live```
+
+## DB
+### Migrate
+Put your SQL in `airstrip.sql` and then
+
+```make migrate```
+
+### Dump
+Get a SQL dump in `airstrip.sql` file
+
+```make dump```
+
+### Postgres Terminal
+Tinker with the database
+
+```make sql```
 
 ## Features
 /record - Record an expense or gain
