@@ -58,7 +58,7 @@ func (st *State) PlannedCurrentMonth(userID int, cost bool) int {
 						OR CURRENT_TIMESTAMP >= r.from_date AND r.till_date IS NULL
 					) OR (
 						DATE_PART('month', date) = DATE_PART('month', CURRENT_TIMESTAMP)
-						AND DATE_PART('year', date) = DATE_PART('month', CURRENT_TIMESTAMP)
+						AND DATE_PART('year', date) = DATE_PART('year', CURRENT_TIMESTAMP)
 					)
 				) 
 			WHERE ac.self = false
