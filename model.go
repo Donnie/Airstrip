@@ -88,3 +88,9 @@ type Saving struct {
 	Effect    int
 	NetEffect int
 }
+
+// Stand is current standing of an account
+type Stand struct {
+	Name  string
+	Stand float64
+}
