@@ -13,6 +13,7 @@ func (st *State) startBot() {
 	st.Bot.Handle("/record", st.handleRecord)
 	st.Bot.Handle("/recur", st.handleRecord)
 	st.Bot.Handle("/stand", st.handleStand)
+	st.Bot.Handle("/tally", st.handleTally)
 	st.Bot.Handle("/view", st.handleView)
 
 	st.Bot.Handle(tb.OnText, st.handleText)
