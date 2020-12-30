@@ -31,6 +31,7 @@ func (st *State) CashTillNow(userID int) int {
 	JOIN accounts AS ai ON r.account_in_id = ai.id 
 	JOIN accounts AS ao ON r.account_out_id = ao.id 
 	WHERE r.mandate = false 
+	AND r.deleted_at IS NULL
 	AND r.user_id = ?`, userID).Scan(&res)
 
 	return res.Sum
@@ -52,6 +53,7 @@ func (st *State) PlannedCurrentMonth(userID int, cost bool) int {
 			FROM accounts AS ac 
 			JOIN records AS r 
 				ON r.account_%s_id = ac.id 
+				AND r.deleted_at IS NULL
 				AND (
 					(
 						CURRENT_TIMESTAMP BETWEEN r.from_date AND r.till_date
@@ -77,35 +79,37 @@ func (st *State) FutureSavings(userID int, fut time.Time) (savings []Saving) {
 	st.Orm.Raw(`SELECT month, income, charge, (income - charge) AS effect, SUM(income-charge) OVER (ORDER BY month) AS net_effect
 	FROM (
 		SELECT month, COALESCE((
-			SELECT SUM(r1.amount) 
-			FROM records AS r1
-			JOIN accounts AS ai1 ON r1.account_in_id = ai1.id 
-			JOIN accounts AS ao1 ON r1.account_out_id = ao1.id 
+			SELECT SUM(r.amount) 
+			FROM records AS r
+			JOIN accounts AS ai1 ON r.account_in_id = ai1.id 
+			JOIN accounts AS ao1 ON r.account_out_id = ao1.id 
 			WHERE (
 				(
-					month::date BETWEEN r1.from_date AND r1.till_date 
+					month::date BETWEEN r.from_date AND r.till_date 
 					OR
-					month::date >= r1.from_date AND r1.till_date IS NULL
+					month::date >= r.from_date AND r.till_date IS NULL
 				)
-				AND r1.mandate
+				AND r.mandate
 				AND ao1.self = false AND ai1.self
-				AND r1.user_id = ?
+				AND r.user_id = ?
+				AND r.deleted_at IS NULL
 			)
 		), 0) AS income, 
 		COALESCE((
-			SELECT SUM(r1.amount) 
-			FROM records AS r1
-			JOIN accounts AS ai1 ON r1.account_in_id = ai1.id 
-			JOIN accounts AS ao1 ON r1.account_out_id = ao1.id 
+			SELECT SUM(r.amount) 
+			FROM records AS r
+			JOIN accounts AS ai1 ON r.account_in_id = ai1.id 
+			JOIN accounts AS ao1 ON r.account_out_id = ao1.id 
 			WHERE (
 				(
-					month::date BETWEEN r1.from_date AND r1.till_date 
+					month::date BETWEEN r.from_date AND r.till_date 
 					OR
-					month::date >= r1.from_date AND r1.till_date IS NULL
+					month::date >= r.from_date AND r.till_date IS NULL
 				)
-				AND r1.mandate
+				AND r.mandate
 				AND ao1.self AND ai1.self = false
-				AND r1.user_id = ?
+				AND r.user_id = ?
+				AND r.deleted_at IS NULL
 			)
 		), 0) AS charge
 		FROM (

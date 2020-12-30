@@ -41,7 +41,8 @@ func getTally(db *gorm.DB, tag string, mon time.Time) float64 {
 	FROM records
 	JOIN accounts AS ai ON ai.id = records.account_in_id
 	JOIN accounts AS ao ON ao.id = records.account_out_id
-	WHERE mandate = false`, tag, tag)
+	WHERE deleted_at IS NULL
+	AND mandate = false`, tag, tag)
 
 	if !mon.IsZero() {
 		query += fmt.Sprintf(` AND EXTRACT(MONTH FROM date) = %d`, int(mon.Month()))
