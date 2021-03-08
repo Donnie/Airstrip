@@ -40,7 +40,8 @@ func (st *State) handleView(m *tb.Message) {
 		)
 		AND r.user_id = ?
 		AND r.deleted_at IS NULL
-	)`, t, t, int(t.Month()), t.Year(), m.Sender.ID).Scan(&lines)
+	) ORDER BY r.date, r.from_date`,
+		t, t, int(t.Month()), t.Year(), m.Sender.ID).Scan(&lines)
 
 	output := fmt.Sprintf("*Overview of %s*\n", t.Format(monthFormat))
 	output += prepareView(viewLines(lines))
