@@ -16,11 +16,11 @@ func (st *State) handleDelete(m *tb.Message) {
 	if err != nil {
 		records := []Record{}
 		st.Orm.Preload("AccountIn").
-			Limit(3).Order("id desc").
+			Limit(10).Order("id desc").
 			Where("user_id = ?", m.Sender.ID).
 			Find(&records)
 
-		output := "You can choose from last three records:\n"
+		output := "You can choose from last ten records:\n"
 		for _, rec := range records {
 			output += fmt.Sprintf("`ID: %d\t%s: %d %s`\n", rec.ID, *rec.AccountIn.Name, *rec.Amount/100, *rec.AccountIn.Currency)
 		}
