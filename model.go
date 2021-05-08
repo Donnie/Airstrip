@@ -64,6 +64,7 @@ type Account struct {
 	Currency *string        `json:"currency"`
 	Name     *string        `json:"name"`
 	Self     *bool          `json:"self"`
+	Liquid   *bool          `json:"liquid"`
 	Tags     pq.StringArray `json:"tags" gorm:"type:text[]"`
 	UserID   *int           `json:"user_id"`
 }
@@ -93,6 +94,7 @@ type Saving struct {
 
 // Stand is current standing of an account
 type Stand struct {
-	Name  string
-	Stand float64
+	Name   string
+	Liquid bool
+	Stand  float64
 }
