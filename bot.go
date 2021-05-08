@@ -12,6 +12,7 @@ func (st *State) startBot() {
 	st.Bot.Handle("/predict", st.handlePredict)
 	st.Bot.Handle("/record", st.handleRecord)
 	st.Bot.Handle("/recur", st.handleRecord)
+	st.Bot.Handle("/savings", st.handleSavings)
 	st.Bot.Handle("/stand", st.handleStand)
 	st.Bot.Handle("/tally", st.handleTally)
 	st.Bot.Handle("/view", st.handleView)
