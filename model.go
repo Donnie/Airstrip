@@ -94,6 +94,7 @@ type Saving struct {
 
 // Stand is current standing of an account
 type Stand struct {
-	Name  string
-	Stand float64
+	Name   string
+	Liquid bool
+	Stand  float64
 }

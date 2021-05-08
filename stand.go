@@ -15,6 +15,8 @@ func (st *State) handleStand(m *tb.Message) {
 	var acc string
 	var mon time.Time
 	var output string
+	totalAmount := 0.0
+	totalLiquid := 0.0
 
 	if len(payload) > 0 {
 		acc = payload[0]
@@ -23,8 +25,14 @@ func (st *State) handleStand(m *tb.Message) {
 	if acc == "" {
 		stands := getStandAll(st.Orm, m.Sender.ID)
 		for _, stand := range stands {
+			totalAmount += stand.Stand
+			if stand.Liquid {
+				totalLiquid += stand.Stand
+			}
 			output += fmt.Sprintf("*%s*: `%.2f EUR`\n", stand.Name, stand.Stand)
 		}
+		output += fmt.Sprintf("\n*Liquid*: `%.2f EUR`", totalLiquid)
+		output += fmt.Sprintf("\n*Total*: `%.2f EUR`", totalAmount)
 	} else {
 		if len(payload) > 1 {
 			mon, _ = time.Parse(monthFormat, payload[1]+" "+payload[2])
@@ -70,9 +78,9 @@ func getStand(db *gorm.DB, acc uint, mon time.Time) float64 {
 }
 
 func getStandAll(db *gorm.DB, userID int) (res []Stand) {
-	db.Raw(`SELECT name, (total_in-total_out)/100 AS stand
+	db.Raw(`SELECT name, liquid, (total_in-total_out)/100 AS stand
 	FROM (
-		SELECT a.name,
+		SELECT a.name, a.liquid,
 		(SELECT COALESCE(SUM(amount), 0) FROM records WHERE account_in_id = a.id AND mandate = false AND deleted_at IS NULL) AS total_in, 
 		(SELECT COALESCE(SUM(amount), 0) FROM records WHERE account_out_id = a.id AND mandate = false AND deleted_at IS NULL) AS total_out
 		FROM accounts AS a
