@@ -25,6 +25,9 @@ func (st *State) handleStand(m *tb.Message) {
 	if acc == "" {
 		stands := getStandAll(st.Orm, m.Sender.ID)
 		for _, stand := range stands {
+			if stand.Stand == 0 {
+				continue
+			}
 			totalAmount += stand.Stand
 			if stand.Liquid {
 				totalLiquid += stand.Stand
@@ -86,6 +89,7 @@ func getStandAll(db *gorm.DB, userID int) (res []Stand) {
 		FROM accounts AS a
 		WHERE a.self
 		AND a.user_id = ?
-	) AS total`, userID).Scan(&res)
+	) AS total
+	ORDER BY name asc`, userID).Scan(&res)
 	return
 }

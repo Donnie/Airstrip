@@ -24,5 +24,6 @@ func migrateUp() {
 	if err != nil {
 		panic(err)
 	}
-	m.Steps(1)
+	// migration upto 10 steps
+	m.Steps(10)
 }
