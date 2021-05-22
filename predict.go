@@ -138,17 +138,17 @@ func (st *State) Predict(fut time.Time, userID int) (out string) {
 	savings := st.FutureSavings(userID, fut)
 
 	out += fmt.Sprintf("*Prediction till EOM %s*\n\n", fut.Format(monthFormat))
-	out += fmt.Sprintf("*%s:* %d EUR\n", time.Now().Format(monthFormat), monthEnd/100)
-	out += fmt.Sprintf("Planned Expenses: %d EUR\n", cost/100)
-	out += fmt.Sprintf("Receivables: %d EUR\n", income/100)
-	out += fmt.Sprintf("Assets: %d EUR", cash/100)
+	out += fmt.Sprintf("*%s:* `%d EUR`\n", time.Now().Format(monthFormat), monthEnd/100)
+	out += fmt.Sprintf("Planned Expenses: `%d EUR`\n", cost/100)
+	out += fmt.Sprintf("Receivables: `%d EUR`\n", income/100)
+	out += fmt.Sprintf("Assets: `%d EUR`", cash/100)
 
 	for i, save := range savings {
 		if len(savings)-i <= 12 {
 			// show only last twelve months
 			// because of telegram message size limitation
 			out += fmt.Sprintf(
-				"\n\n*%s:* %d EUR\nCharge: %d EUR\nIncome: %d EUR\nEffect: %d EUR",
+				"\n\n*%s:* `%d EUR`\nCharge: `%d EUR`\nIncome: `%d EUR`\nEffect: `%d EUR`",
 				save.Month.Format(monthFormat), (monthEnd+save.NetEffect)/100, save.Charge/100, save.Income/100, save.Effect/100,
 			)
 		}
