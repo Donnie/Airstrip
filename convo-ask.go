@@ -65,6 +65,7 @@ func (convo *Convo) end() {
 func (convo *Convo) getRecentAccountBtns(db *gorm.DB, start int, inOut string) {
 	var accounts []Account
 	db.Where("records.mandate = false").
+		Where("records.user_id = ?", *convo.UserID).
 		Joins(fmt.Sprintf("JOIN records ON records.account_%s_id = accounts.id", inOut)).
 		Group("accounts.id").Order("MAX(records.date) desc, accounts.id").
 		Limit(8).Offset(start).Find(&accounts)
