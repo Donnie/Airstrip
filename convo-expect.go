@@ -158,9 +158,8 @@ func (convo *Convo) expectTillDate(db *gorm.DB, input string) {
 	}
 	dateTime = dateTime.AddDate(0, 1, -1)
 
-	record := &Record{}
-	db.First(&record, *convo.ContextID)
-	record.TillDate = &dateTime
-	db.Save(&record)
+	db.Model(&Record{}).
+		Where("id = ?", *convo.ContextID).
+		Update("till_date", dateTime)
 	convo.end()
 }
