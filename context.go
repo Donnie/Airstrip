@@ -30,10 +30,11 @@ func (st *State) handleContext(sender *tb.User, input string) {
 	}
 
 	convo.handlers = make(map[string]Expector)
+	convo.Handle("amount", convo.expectAmount)
 	convo.Handle("account in", convo.expectAccountIn)
 	convo.Handle("account out", convo.expectAccountOut)
-	convo.Handle("account new", convo.expectAccountQue)
-	convo.Handle("amount", convo.expectAmount)
+	convo.Handle("account new in", convo.expectAccountInQue)
+	convo.Handle("account new out", convo.expectAccountOutQue)
 	convo.Handle("date", convo.expectDate)
 	convo.Handle("description", convo.expectDescription)
 	convo.Handle("from date", convo.expectFromDate)

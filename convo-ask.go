@@ -17,8 +17,8 @@ func (convo *Convo) askAccountIn(db *gorm.DB) {
 	convo.Expect = ptr.String("account in")
 }
 
-func (convo *Convo) askCreateAccount(input string) {
-	convo.Expect = ptr.String("account new")
+func (convo *Convo) askCreateAccountIn(input string) {
+	convo.Expect = ptr.String("account new in")
 	convo.menu.Inline(
 		convo.menu.Row(
 			convo.menu.Data("Yes", "y-"+input),
@@ -30,6 +30,16 @@ func (convo *Convo) askCreateAccount(input string) {
 func (convo *Convo) askAccountOut(db *gorm.DB) {
 	convo.getRecentAccountBtns(db, 0, "out")
 	convo.Expect = ptr.String("account out")
+}
+
+func (convo *Convo) askCreateAccountOut(input string) {
+	convo.Expect = ptr.String("account new out")
+	convo.menu.Inline(
+		convo.menu.Row(
+			convo.menu.Data("Yes", "y-"+input),
+			convo.menu.Data("No", "n-"+input),
+		),
+	)
 }
 
 func (convo *Convo) askDescription() {
@@ -91,7 +101,11 @@ func (convo *Convo) getRecentAccountBtns(db *gorm.DB, start int, inOut string) {
 
 func genQues(ask string) (out string) {
 	switch ask {
-	case "account new":
+	case "account in":
+		out = "Which account to be credited?"
+	case "account out":
+		out = "Which account to be debited?"
+	case "account new in", "account new out":
 		out = "No account found by that name\\. Create one?"
 	case "account name":
 		out = "What is the new account name?"
