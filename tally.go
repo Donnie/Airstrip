@@ -21,13 +21,13 @@ func (st *State) handleTally(m *tb.Message) {
 			mon, _ = time.Parse(monthFormat, payload[1]+" "+payload[2])
 		}
 
-		amount := getTally(st.Orm, payload[0], mon)
+		amount := getTally(st.Orm, payload[0], mon, m.Sender.ID)
 		output = fmt.Sprintf("*Standing*: `%.2f EUR`", amount)
 	}
 	st.Bot.Send(m.Sender, output, tb.ModeMarkdown)
 }
 
-func getTally(db *gorm.DB, tag string, mon time.Time) float64 {
+func getTally(db *gorm.DB, tag string, mon time.Time, user int) float64 {
 	var res struct {
 		Sum float64
 	}
@@ -42,7 +42,8 @@ func getTally(db *gorm.DB, tag string, mon time.Time) float64 {
 	JOIN accounts AS ai ON ai.id = records.account_in_id
 	JOIN accounts AS ao ON ao.id = records.account_out_id
 	WHERE deleted_at IS NULL
-	AND mandate = false`, tag, tag)
+	AND user_id = %d
+	AND mandate = false`, tag, tag, user)
 
 	if !mon.IsZero() {
 		query += fmt.Sprintf(` AND EXTRACT(MONTH FROM date) = %d`, int(mon.Month()))
