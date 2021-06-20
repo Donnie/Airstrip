@@ -94,29 +94,30 @@ func (convo *Convo) end() {
 
 func (convo *Convo) getRecentAccountBtns(db *gorm.DB, start int, inOut string) {
 	var accounts []Account
+	numberRows := 3
+	btnsPerRow := 5
+
 	db.Where("records.mandate = false").
 		Where("records.user_id = ?", *convo.UserID).
 		Joins(fmt.Sprintf("JOIN records ON records.account_%s_id = accounts.id", inOut)).
-		Group("accounts.id").Order("COUNT(records.date) desc, accounts.id").
-		Limit(8).Offset(start).Find(&accounts)
+		// get latest accounts and not most popular accounts
+		// MAX because you need an aggregate function #postgres
+		Group("accounts.id").Order("MAX(records.date) desc, accounts.id").
+		Limit(numberRows * btnsPerRow).Offset(start).Find(&accounts)
 
-	var btns []tb.Btn
-	for i := 0; i < getMin(4, len(accounts)); i++ {
-		btns = append(btns, convo.menu.Data(*accounts[i].Name, *accounts[i].Name))
+	var rows [][]tb.Btn
+	for i := 0; i < numberRows; i++ {
+		var btns []tb.Btn
+		for j := i * btnsPerRow; j < getMin(getMin((i+1)*btnsPerRow, (numberRows*btnsPerRow-1)), len(accounts)); j++ {
+			fmt.Println(getMin((i+1)*btnsPerRow, (numberRows*btnsPerRow - 1)))
+			btns = append(btns, convo.menu.Data(*accounts[j].Name, *accounts[j].Name))
+		}
+		if i == (numberRows-1) && len(accounts) > (numberRows*btnsPerRow-1) {
+			btns = append(btns, convo.menu.Data("More...", fmt.Sprintf("more-%d", start+(numberRows*btnsPerRow-1))))
+		}
+		rows = append(rows, convo.menu.Row(btns...))
 	}
-	rowOne := convo.menu.Row(btns...)
-
-	btns = []tb.Btn{}
-	for i := 4; i < getMin(7, len(accounts)); i++ {
-		btns = append(btns, convo.menu.Data(*accounts[i].Name, *accounts[i].Name))
-	}
-
-	if len(accounts) > 7 {
-		btns = append(btns, convo.menu.Data("More...", fmt.Sprintf("more-%d", start+7)))
-	}
-
-	rowTwo := convo.menu.Row(btns...)
-	convo.menu.Inline(rowOne, rowTwo)
+	convo.menu.Inline(rows[0], rows[1], rows[2])
 }
 
 func genQues(ask string) (out string) {
