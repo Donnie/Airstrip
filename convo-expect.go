@@ -59,7 +59,7 @@ func (convo *Convo) expectAccountIn(db *gorm.DB, input string) {
 		First(&account).Error
 
 	if err != nil || errors.Is(err, gorm.ErrRecordNotFound) {
-		convo.askCreateAccount(input)
+		convo.askCreateAccountIn(input)
 		return
 	}
 
@@ -69,7 +69,7 @@ func (convo *Convo) expectAccountIn(db *gorm.DB, input string) {
 	convo.askAccountOut(db)
 }
 
-func (convo *Convo) expectAccountQue(db *gorm.DB, input string) {
+func (convo *Convo) expectAccountInQue(db *gorm.DB, input string) {
 	inp := strings.Split(input, "-")
 	switch strings.ToLower(inp[0]) {
 	case "y":
@@ -84,9 +84,24 @@ func (convo *Convo) expectAccountQue(db *gorm.DB, input string) {
 			Where("id = ?", *convo.ContextID).
 			Update("account_in_id", account.ID)
 
-		convo.askAccountOut(db)
+		convo.askCreateAccountSelfIn(inp[1])
 	default:
 		convo.askAccountIn(db)
+	}
+}
+
+func (convo *Convo) expectCreateAccountSelfIn(db *gorm.DB, input string) {
+	inp := strings.Split(input, "-")
+	switch strings.ToLower(inp[0]) {
+	case "y":
+		db.Model(&Account{}).
+			Where("name = ?", inp[1]).
+			Where("user_id = ?", *convo.UserID).
+			Update("self", true)
+
+		convo.askAccountOut(db)
+	default:
+		convo.askAccountOut(db)
 	}
 }
 
@@ -106,7 +121,7 @@ func (convo *Convo) expectAccountOut(db *gorm.DB, input string) {
 		First(&account).Error
 
 	if err != nil || errors.Is(err, gorm.ErrRecordNotFound) {
-		convo.askAccountOut(db)
+		convo.askCreateAccountOut(input)
 		return
 	}
 
@@ -114,6 +129,42 @@ func (convo *Convo) expectAccountOut(db *gorm.DB, input string) {
 		Where("id = ?", *convo.ContextID).
 		Update("account_out_id", account.ID)
 	convo.askDescription()
+}
+
+func (convo *Convo) expectAccountOutQue(db *gorm.DB, input string) {
+	inp := strings.Split(input, "-")
+	switch strings.ToLower(inp[0]) {
+	case "y":
+		var account Account
+		account.Currency = ptr.String("EUR")
+		account.Name = &inp[1]
+		account.Self = ptr.Bool(false)
+		account.UserID = convo.UserID
+		db.Create(&account)
+
+		db.Model(&Record{}).
+			Where("id = ?", *convo.ContextID).
+			Update("account_out_id", account.ID)
+
+		convo.askCreateAccountSelfOut(inp[1])
+	default:
+		convo.askAccountOut(db)
+	}
+}
+
+func (convo *Convo) expectCreateAccountSelfOut(db *gorm.DB, input string) {
+	inp := strings.Split(input, "-")
+	switch strings.ToLower(inp[0]) {
+	case "y":
+		db.Model(&Account{}).
+			Where("name = ?", inp[1]).
+			Where("user_id = ?", *convo.UserID).
+			Update("self", true)
+
+		convo.askDescription()
+	default:
+		convo.askDescription()
+	}
 }
 
 func (convo *Convo) expectDescription(db *gorm.DB, input string) {
