@@ -27,6 +27,16 @@ func (convo *Convo) askCreateAccountIn(input string) {
 	)
 }
 
+func (convo *Convo) askCreateAccountSelfIn(input string) {
+	convo.Expect = ptr.String("account new self in")
+	convo.menu.Inline(
+		convo.menu.Row(
+			convo.menu.Data("Yes", "y-"+input),
+			convo.menu.Data("No", "n-"+input),
+		),
+	)
+}
+
 func (convo *Convo) askAccountOut(db *gorm.DB) {
 	convo.getRecentAccountBtns(db, 0, "out")
 	convo.Expect = ptr.String("account out")
@@ -34,6 +44,16 @@ func (convo *Convo) askAccountOut(db *gorm.DB) {
 
 func (convo *Convo) askCreateAccountOut(input string) {
 	convo.Expect = ptr.String("account new out")
+	convo.menu.Inline(
+		convo.menu.Row(
+			convo.menu.Data("Yes", "y-"+input),
+			convo.menu.Data("No", "n-"+input),
+		),
+	)
+}
+
+func (convo *Convo) askCreateAccountSelfOut(input string) {
+	convo.Expect = ptr.String("account new self out")
 	convo.menu.Inline(
 		convo.menu.Row(
 			convo.menu.Data("Yes", "y-"+input),
@@ -107,8 +127,8 @@ func genQues(ask string) (out string) {
 		out = "Which account to be debited?"
 	case "account new in", "account new out":
 		out = "No account found by that name\\. Create one?"
-	case "account name":
-		out = "What is the new account name?"
+	case "account new self in", "account new self out":
+		out = "Is this your own account?"
 	case "from date", "till date":
 		out = fmt.Sprintf("What is the %s?\n\nSpecify in this format: *_Jan 2006_*", ask)
 	default:
