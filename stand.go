@@ -74,6 +74,7 @@ func getStand(db *gorm.DB, acc uint, mon time.Time) float64 {
 
 	if !mon.IsZero() {
 		query += fmt.Sprintf(` AND EXTRACT(MONTH FROM date) = %d`, int(mon.Month()))
+		query += fmt.Sprintf(` AND EXTRACT(YEAR FROM date) = %d`, int(mon.Year()))
 	}
 
 	db.Raw(query).Scan(&res)
