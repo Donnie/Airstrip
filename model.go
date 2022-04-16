@@ -36,7 +36,7 @@ type Record struct {
 	FromDate     *time.Time `json:"from_date"`
 	Mandate      *bool      `json:"mandate"`
 	TillDate     *time.Time `json:"till_date"`
-	UserID       *int       `json:"user_id"`
+	UserID       *int64     `json:"user_id"`
 }
 
 // Expector is a function which expects a contextual response
@@ -47,7 +47,7 @@ type Expector func(*gorm.DB, string)
 type Convo struct {
 	gorm.Model
 
-	UserID    *int    `json:"user_id"`
+	UserID    *int64  `json:"user_id"`
 	Expect    *string `json:"expect"`
 	ContextID *uint   `json:"context_id"`
 
@@ -66,7 +66,7 @@ type Account struct {
 	Self     *bool          `json:"self"`
 	Liquid   *bool          `json:"liquid"`
 	Tags     pq.StringArray `json:"tags" gorm:"type:text[]"`
-	UserID   *int           `json:"user_id"`
+	UserID   *int64         `json:"user_id"`
 }
 
 // Line is a transaction description

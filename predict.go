@@ -18,7 +18,7 @@ func (st *State) handlePredict(m *tb.Message) {
 }
 
 // CashTillNow calculates Summation of all assets till now
-func (st *State) CashTillNow(userID int) int {
+func (st *State) CashTillNow(userID int64) int {
 	var res struct{ Sum int }
 
 	st.Orm.Raw(`SELECT SUM(
@@ -38,7 +38,7 @@ func (st *State) CashTillNow(userID int) int {
 }
 
 // PlannedCurrentMonth calculates remaining costs and incomes for current month
-func (st *State) PlannedCurrentMonth(userID int, cost bool) int {
+func (st *State) PlannedCurrentMonth(userID int64, cost bool) int {
 	var res struct{ Sum int }
 	dir := "out"
 	if cost {
@@ -75,7 +75,7 @@ func (st *State) PlannedCurrentMonth(userID int, cost bool) int {
 }
 
 // FutureSavings calculates savings till a future date
-func (st *State) FutureSavings(userID int, fut time.Time) (savings []Saving) {
+func (st *State) FutureSavings(userID int64, fut time.Time) (savings []Saving) {
 	st.Orm.Raw(`SELECT month, income, charge, (income - charge) AS effect, SUM(income-charge) OVER (ORDER BY month) AS net_effect
 	FROM (
 		SELECT month, COALESCE((
@@ -130,7 +130,7 @@ func (st *State) FutureSavings(userID int, fut time.Time) (savings []Saving) {
 }
 
 // Predict generates prediction for userID till fut
-func (st *State) Predict(fut time.Time, userID int) (out string) {
+func (st *State) Predict(fut time.Time, userID int64) (out string) {
 	cash := st.CashTillNow(userID)
 	cost := st.PlannedCurrentMonth(userID, true)
 	income := st.PlannedCurrentMonth(userID, false)

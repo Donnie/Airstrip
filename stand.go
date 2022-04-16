@@ -81,7 +81,7 @@ func getStand(db *gorm.DB, acc uint, mon time.Time) float64 {
 	return res.Sum
 }
 
-func getStandAll(db *gorm.DB, userID int) (res []Stand) {
+func getStandAll(db *gorm.DB, userID int64) (res []Stand) {
 	db.Raw(`SELECT name, liquid, (total_in-total_out)/100 AS stand
 	FROM (
 		SELECT a.name, a.liquid,

@@ -18,7 +18,7 @@ func (st *State) handleSavings(m *tb.Message) {
 }
 
 // Analyse generates savings analyse for userID for the past
-func (st *State) Analyse(past time.Time, userID int) (out string) {
+func (st *State) Analyse(past time.Time, userID int64) (out string) {
 	savings := st.PastSavings(userID, past)
 	cash := st.CashTillNow(userID)
 	out += fmt.Sprintf("Assets: %d EUR\n\n", cash/100)
@@ -35,7 +35,7 @@ func (st *State) Analyse(past time.Time, userID int) (out string) {
 }
 
 // PastSavings calculates savings till a past date
-func (st *State) PastSavings(userID int, past time.Time) (savings []Saving) {
+func (st *State) PastSavings(userID int64, past time.Time) (savings []Saving) {
 	st.Orm.Raw(`SELECT
 		month,
 		COALESCE((
