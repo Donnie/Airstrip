@@ -27,7 +27,7 @@ func (st *State) handleTally(m *tb.Message) {
 	st.Bot.Send(m.Sender, output, tb.ModeMarkdown)
 }
 
-func getTally(db *gorm.DB, tag string, mon time.Time, user int) float64 {
+func getTally(db *gorm.DB, tag string, mon time.Time, user int64) float64 {
 	var res struct {
 		Sum float64
 	}
