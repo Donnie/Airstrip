@@ -62,12 +62,12 @@ func getStand(db *gorm.DB, acc uint, mon time.Time) float64 {
 		Sum float64
 	}
 
-	query := fmt.Sprintf(`SELECT SUM(
+	query := fmt.Sprintf(`SELECT CAST(SUM(
 		CASE 
 		WHEN account_in_id = %d THEN amount * 1 
 		WHEN account_out_id = %d THEN amount * -1 
 		END
-	)/100 as sum
+	) as REAL)/100 as sum
 	FROM records
 	WHERE mandate = "f"
 	AND deleted_at IS NULL`, acc, acc)
@@ -82,7 +82,7 @@ func getStand(db *gorm.DB, acc uint, mon time.Time) float64 {
 }
 
 func getStandAll(db *gorm.DB, userID int64) (res []Stand) {
-	db.Raw(`SELECT name, liquid, (total_in-total_out)/100 AS stand
+	db.Raw(`SELECT name, liquid, CAST((total_in-total_out) as REAL)/100 AS stand
 	FROM (
 		SELECT a.name, a.liquid,
 		(SELECT COALESCE(SUM(amount), 0) FROM records WHERE account_in_id = a.id AND mandate = "f" AND deleted_at IS NULL) AS total_in, 
