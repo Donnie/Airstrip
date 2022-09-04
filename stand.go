@@ -73,8 +73,8 @@ func getStand(db *gorm.DB, acc uint, mon time.Time) float64 {
 	AND deleted_at IS NULL`, acc, acc)
 
 	if !mon.IsZero() {
-		query += fmt.Sprintf(` AND EXTRACT(MONTH FROM date) = %d`, int(mon.Month()))
-		query += fmt.Sprintf(` AND EXTRACT(YEAR FROM date) = %d`, int(mon.Year()))
+		query += fmt.Sprintf(` AND LTRIM(STRFTIME('%%m', date), "0") = "%d"`, int(mon.Month()))
+		query += fmt.Sprintf(` AND STRFTIME('%%Y', date) = "%d"`, int(mon.Year()))
 	}
 
 	db.Raw(query).Scan(&res)
