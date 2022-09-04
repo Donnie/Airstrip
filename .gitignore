@@ -3,3 +3,5 @@ db
 .env
 .goreload
 airstrip.sql
+.vscode
+lite

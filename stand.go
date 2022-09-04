@@ -62,19 +62,19 @@ func getStand(db *gorm.DB, acc uint, mon time.Time) float64 {
 		Sum float64
 	}
 
-	query := fmt.Sprintf(`SELECT SUM(
+	query := fmt.Sprintf(`SELECT CAST(SUM(
 		CASE 
 		WHEN account_in_id = %d THEN amount * 1 
 		WHEN account_out_id = %d THEN amount * -1 
 		END
-	)/100 as sum
+	) as REAL)/100 as sum
 	FROM records
-	WHERE mandate = false
+	WHERE mandate = "f"
 	AND deleted_at IS NULL`, acc, acc)
 
 	if !mon.IsZero() {
-		query += fmt.Sprintf(` AND EXTRACT(MONTH FROM date) = %d`, int(mon.Month()))
-		query += fmt.Sprintf(` AND EXTRACT(YEAR FROM date) = %d`, int(mon.Year()))
+		query += fmt.Sprintf(` AND LTRIM(STRFTIME('%%m', date), "0") = "%d"`, int(mon.Month()))
+		query += fmt.Sprintf(` AND STRFTIME('%%Y', date) = "%d"`, int(mon.Year()))
 	}
 
 	db.Raw(query).Scan(&res)
@@ -82,13 +82,13 @@ func getStand(db *gorm.DB, acc uint, mon time.Time) float64 {
 }
 
 func getStandAll(db *gorm.DB, userID int64) (res []Stand) {
-	db.Raw(`SELECT name, liquid, (total_in-total_out)/100 AS stand
+	db.Raw(`SELECT name, liquid, CAST((total_in-total_out) as REAL)/100 AS stand
 	FROM (
 		SELECT a.name, a.liquid,
-		(SELECT COALESCE(SUM(amount), 0) FROM records WHERE account_in_id = a.id AND mandate = false AND deleted_at IS NULL) AS total_in, 
-		(SELECT COALESCE(SUM(amount), 0) FROM records WHERE account_out_id = a.id AND mandate = false AND deleted_at IS NULL) AS total_out
+		(SELECT COALESCE(SUM(amount), 0) FROM records WHERE account_in_id = a.id AND mandate = "f" AND deleted_at IS NULL) AS total_in, 
+		(SELECT COALESCE(SUM(amount), 0) FROM records WHERE account_out_id = a.id AND mandate = "f" AND deleted_at IS NULL) AS total_out
 		FROM accounts AS a
-		WHERE a.self
+		WHERE a.self = "t"
 		AND a.user_id = ?
 	) AS total
 	ORDER BY name asc`, userID).Scan(&res)

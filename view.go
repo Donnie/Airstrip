@@ -14,13 +14,14 @@ func (st *State) handleView(m *tb.Message) {
 	}
 
 	var lines []Line
-	st.Orm.Raw(`SELECT ai.name, CAST(r.amount AS DOUBLE PRECISION)/100 AS amount, (
+
+	query := fmt.Sprintf(`SELECT ai.name, CAST(r.amount AS REAL)/100 AS amount, (
 		CASE
-		WHEN ai.self AND ao.self THEN 'Transfers' 
-		WHEN r.mandate = false AND ai.self = false THEN 'Expenses' 
-		WHEN r.mandate = false AND ai.self THEN 'Gains' 
-		WHEN r.mandate AND ai.self THEN 'Incomes' 
-		WHEN r.mandate AND ai.self = false THEN 'Charges'
+		WHEN ai.self = "t" AND ao.self = "t" THEN 'Transfers'
+		WHEN r.mandate = "f" AND ai.self = "f" THEN 'Expenses'
+		WHEN r.mandate = "f" AND ai.self = "t" THEN 'Gains'
+		WHEN r.mandate = "t" AND ai.self = "t" THEN 'Incomes'
+		WHEN r.mandate = "t" AND ai.self = "f" THEN 'Charges'
 		END
 	) as type 
 	FROM records AS r 
@@ -29,19 +30,22 @@ func (st *State) handleView(m *tb.Message) {
 	WHERE (
 		(
 			(
-				?::date BETWEEN r.from_date AND r.till_date 
+				"%s" BETWEEN r.from_date AND r.till_date
 				OR
-				?::date >= r.from_date AND r.till_date IS NULL
+				"%s" >= r.from_date AND r.till_date IS NULL
 			) OR (
-				EXTRACT(MONTH FROM date) = ? 
+				LTRIM(STRFTIME('%%m', date), "0") = "%d"
 				AND
-				EXTRACT(YEAR FROM date) = ?
+				STRFTIME('%%Y', date) = "%d"
 			)
 		)
-		AND r.user_id = ?
+		AND r.user_id = %d 
 		AND r.deleted_at IS NULL
 	) ORDER BY r.date, r.from_date`,
-		t, t, int(t.Month()), t.Year(), m.Sender.ID).Scan(&lines)
+		t.Format("2006-01-02"), t.Format("2006-01-02"),
+		int(t.Month()), t.Year(), m.Sender.ID,
+	)
+	st.Orm.Raw(query).Scan(&lines)
 
 	output := fmt.Sprintf("*Overview of %s*\n", t.Format(monthFormat))
 	output += prepareView(viewLines(lines))
