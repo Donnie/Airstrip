@@ -69,7 +69,7 @@ func getStand(db *gorm.DB, acc uint, mon time.Time) float64 {
 		END
 	)/100 as sum
 	FROM records
-	WHERE mandate = false
+	WHERE mandate = "f"
 	AND deleted_at IS NULL`, acc, acc)
 
 	if !mon.IsZero() {
