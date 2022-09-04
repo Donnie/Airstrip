@@ -11,12 +11,6 @@ import (
 	"gorm.io/gorm"
 )
 
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
 func init() {
 	if _, err := os.Stat(".env.local"); os.IsNotExist(err) {
 		godotenv.Load(".env")
@@ -46,7 +40,7 @@ func main() {
 		fmt.Println("Failed to connect to database")
 		os.Exit(1)
 	}
-	sqlDB, err := db.DB()
+	sqlDB, _ := db.DB()
 	sqlDB.SetConnMaxLifetime(time.Hour)
 	sqlDB.SetMaxOpenConns(10)
 	migrateUp()
@@ -60,9 +54,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	orm := db
+	if os.Getenv("DB") == "sqlite" {
+		orm = initSQLDB()
+	}
+
 	st := State{
 		Bot: bot,
-		Orm: db,
+		Orm: orm,
 		Env: &Env{
 			TELETOKEN: teleToken,
 		},

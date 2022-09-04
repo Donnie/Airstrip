@@ -3,7 +3,7 @@ RUN apk update && apk add --no-cache git ca-certificates && update-ca-certificat
 
 # Set necessary environmet variables needed for our image
 ENV GO111MODULE=on \
-    CGO_ENABLED=0 \
+    CGO_ENABLED=1 \
     GOOS=linux \
     GOARCH=amd64
 
@@ -22,7 +22,7 @@ COPY . .
 # RUN go test ./...
 
 # Build the application
-RUN go build -o main .
+RUN go build -ldflags '-extldflags "-static"' -o main
 
 # Move to /dist directory as the place for resulting binary folder
 WORKDIR /dist

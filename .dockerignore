@@ -1,8 +1,9 @@
 .dockerignore
 .env
 .env.local
-db
 .git
-main
 .goreload
 airstrip.sql
+db
+lite
+main

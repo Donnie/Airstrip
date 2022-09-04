@@ -1,13 +1,12 @@
 FROM golang:alpine
 RUN apk update && apk add --no-cache git ca-certificates && update-ca-certificates
+RUN apk add --virtual build-dependencies build-base gcc
 
 # Set necessary environmet variables needed for our image
 ENV GO111MODULE=on \
-    CGO_ENABLED=0 \
+    CGO_ENABLED=1 \
     GOOS=linux \
     GOARCH=amd64
-
-RUN go get -u github.com/acoshift/goreload
 
 # Move to working directory /build
 WORKDIR /build
@@ -16,6 +15,8 @@ WORKDIR /build
 COPY go.mod .
 COPY go.sum .
 RUN go mod download
+
+# RUN go get github.com/acoshift/goreload
 
 # Copy the code into the container
 COPY . .

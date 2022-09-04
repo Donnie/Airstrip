@@ -4,11 +4,12 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.dev
-        command: goreload .
+        command: go run .
         links:
             - postgres
         volumes:
             - ./:/build
+            - ./lite:/build/lite
     postgres:
         container_name: airstrip_db
         hostname: postgres
