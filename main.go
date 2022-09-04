@@ -7,8 +7,6 @@ import (
 
 	"github.com/joho/godotenv"
 	tb "gopkg.in/tucnak/telebot.v2"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func init() {
@@ -27,23 +25,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	dsn := fmt.Sprintf(
-		"user=%s password=%s dbname=%s port=%s host=%s",
-		os.Getenv("PG_USER"),
-		os.Getenv("PG_PASS"),
-		os.Getenv("PG_DBAS"),
-		os.Getenv("PG_PORT"),
-		os.Getenv("PG_HOST"),
-	)
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		fmt.Println("Failed to connect to database")
-		os.Exit(1)
-	}
-	sqlDB, _ := db.DB()
-	sqlDB.SetConnMaxLifetime(time.Hour)
-	sqlDB.SetMaxOpenConns(10)
-	migrateUp()
+	orm := initSQLDB()
 
 	bot, err := tb.NewBot(tb.Settings{
 		Token:  teleToken,
@@ -52,11 +34,6 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
-	}
-
-	orm := db
-	if os.Getenv("DB") == "sqlite" {
-		orm = initSQLDB()
 	}
 
 	st := State{

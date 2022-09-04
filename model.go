@@ -24,7 +24,7 @@ type Env struct {
 
 // Record represents one Record
 type Record struct {
-	ID uint `json:"-" gorm:"primarykey"`
+	gorm.Model
 
 	AccountIn    *Account   `json:"account_in"`
 	AccountInID  *uint      `json:"account_in_id"`
@@ -45,7 +45,7 @@ type Expector func(*gorm.DB, string)
 // Convo stores a conversation context
 // the non-db fields are used to manipulate the bot
 type Convo struct {
-	ID uint `json:"-" gorm:"primarykey"`
+	gorm.Model
 
 	UserID    *int64  `json:"user_id"`
 	Expect    *string `json:"expect"`
@@ -59,7 +59,7 @@ type Convo struct {
 
 // Account represents a partaker in a transaction
 type Account struct {
-	ID uint `json:"-" gorm:"primarykey"`
+	gorm.Model
 
 	Currency *string        `json:"currency"`
 	Name     *string        `json:"name"`
