@@ -1,10 +1,11 @@
 version: '3.8'
 services: 
     airstrip:
+        container_name: airstrip
         build:
             context: .
             dockerfile: Dockerfile.dev
-        command: go run .
+        command: goreload --buildArgs -buildvcs=false --path .
         links:
             - postgres
         volumes:
