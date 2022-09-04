@@ -6,21 +6,6 @@ services:
             context: .
             dockerfile: Dockerfile.dev
         command: goreload --buildArgs -buildvcs=false --path .
-        links:
-            - postgres
         volumes:
             - ./:/build
             - ./lite:/build/lite
-    postgres:
-        container_name: airstrip_db
-        hostname: postgres
-        environment: 
-            - POSTGRES_USER=airstrip
-            - POSTGRES_DB=airstrip
-            - POSTGRES_PASSWORD=postgres
-        image: 'postgres:alpine'
-        ports: 
-            - '5432:5432'
-        restart: always
-        volumes:
-            - "./db:/var/lib/postgresql/data"

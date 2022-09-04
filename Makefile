@@ -1,17 +1,11 @@
 builddev:
-	docker-compose build --pull
+	docker build -f Dockerfile.dev -t donnieashok/airstrip:dev .
 
 dev:
 	docker-compose --env-file ./.env.local up
 
 sql:
-	docker-compose run -e PGPASSWORD=postgres postgres psql --host=airstrip_db --username=airstrip --dbname=airstrip
-
-dump:
-	docker exec -e PGPASSWORD=postgres airstrip_db pg_dump --username=airstrip airstrip > airstrip.sql
-
-migrate:
-	docker exec -e PGPASSWORD=postgres -i airstrip_db psql --username airstrip --dbname airstrip < ./airstrip.sql
+	sqlite lite/sql.db
 
 clean:
 	@echo "Cleaning Docker environment..."
