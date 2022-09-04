@@ -27,7 +27,8 @@ live:
 	ssh root@airstrip docker pull donnieashok/airstrip:prod
 	- ssh root@airstrip docker stop airstrip
 	- ssh root@airstrip docker rm airstrip
-	scp -r ./.env root@airstrip:/root/
-	ssh root@airstrip docker run -d --restart on-failure --env-file /root/.env --name airstrip donnieashok/airstrip:prod
-	ssh root@airstrip rm /root/.env
+	scp ./.env root@airstrip:/home/airstrip/
+	scp ./db/sql.db root@airstrip:/home/airstrip/db/
+	ssh root@airstrip docker run -d --restart on-failure -v /home/airstrip/db:/db --env-file /home/airstrip/.env --name airstrip donnieashok/airstrip:prod
+	ssh root@airstrip rm /home/airstrip/.env
 	@echo "Is live"

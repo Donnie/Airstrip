@@ -1,5 +1,6 @@
 FROM golang:alpine AS builder
 RUN apk update && apk add --no-cache git ca-certificates && update-ca-certificates
+RUN apk add --virtual build-dependencies build-base gcc
 
 # Set necessary environmet variables needed for our image
 ENV GO111MODULE=on \
