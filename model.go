@@ -3,7 +3,6 @@ package main
 import (
 	"time"
 
-	"github.com/lib/pq"
 	tb "gopkg.in/tucnak/telebot.v2"
 	"gorm.io/gorm"
 )
@@ -61,12 +60,11 @@ type Convo struct {
 type Account struct {
 	gorm.Model
 
-	Currency *string        `json:"currency"`
-	Name     *string        `json:"name"`
-	Self     *bool          `json:"self"`
-	Liquid   *bool          `json:"liquid"`
-	Tags     pq.StringArray `json:"tags" gorm:"type:text[]"`
-	UserID   *int64         `json:"user_id"`
+	Currency *string `json:"currency"`
+	Name     *string `json:"name"`
+	Self     *bool   `json:"self"`
+	Liquid   *bool   `json:"liquid"`
+	UserID   *int64  `json:"user_id"`
 }
 
 // Line is a transaction description
