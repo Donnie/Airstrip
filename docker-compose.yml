@@ -8,4 +8,4 @@ services:
         command: goreload --buildArgs -buildvcs=false --path .
         volumes:
             - ./:/build
-            - ./lite:/build/lite
+            - ./db:/build/db
