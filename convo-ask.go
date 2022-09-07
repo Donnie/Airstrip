@@ -97,7 +97,7 @@ func (convo *Convo) getRecentAccountBtns(db *gorm.DB, start int, inOut string) {
 	numberRows := 3
 	btnsPerRow := 5
 
-	db.Where(`records.mandate = "f"`).
+	db.Where(`records.mandate = 0`).
 		Where("records.user_id = ?", *convo.UserID).
 		Joins(fmt.Sprintf("JOIN records ON records.account_%s_id = accounts.id", inOut)).
 		// get latest accounts and not most popular accounts

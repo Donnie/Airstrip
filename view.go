@@ -17,11 +17,11 @@ func (st *State) handleView(m *tb.Message) {
 
 	query := fmt.Sprintf(`SELECT ai.name, CAST(r.amount AS REAL)/100 AS amount, (
 		CASE
-		WHEN ai.self = "t" AND ao.self = "t" THEN 'Transfers'
-		WHEN r.mandate = "f" AND ai.self = "f" THEN 'Expenses'
-		WHEN r.mandate = "f" AND ai.self = "t" THEN 'Gains'
-		WHEN r.mandate = "t" AND ai.self = "t" THEN 'Incomes'
-		WHEN r.mandate = "t" AND ai.self = "f" THEN 'Charges'
+		WHEN ai.self = 1 AND ao.self = 1 THEN 'Transfers'
+		WHEN r.mandate = 0 AND ai.self = 0 THEN 'Expenses'
+		WHEN r.mandate = 0 AND ai.self = 1 THEN 'Gains'
+		WHEN r.mandate = 1 AND ai.self = 1 THEN 'Incomes'
+		WHEN r.mandate = 1 AND ai.self = 0 THEN 'Charges'
 		END
 	) as type 
 	FROM records AS r 

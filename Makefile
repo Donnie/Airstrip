@@ -5,7 +5,7 @@ dev:
 	docker-compose --env-file ./.env.local up
 
 sql:
-	sqlite db/sql.db
+	sqlite3 db/sql.db
 
 clean:
 	@echo "Cleaning Docker environment..."
