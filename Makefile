@@ -5,20 +5,18 @@ dev:
 	docker-compose --env-file ./.env.local up
 
 sql:
-	sqlite lite/sql.db
+	sqlite3 db/sql.db
 
 clean:
 	@echo "Cleaning Docker environment..."
 	docker-compose stop
 	docker-compose down -v
 
-# CI
 build:
 	@echo "Building for prod"
 	docker build -t donnieashok/airstrip:prod .
 
 deploy: build
-	echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USERNAME)" --password-stdin
 	docker push donnieashok/airstrip:prod
 	@echo "Deployed!"
 
