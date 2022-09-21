@@ -28,7 +28,6 @@ live:
 	- ssh donnie@airstrip sudo docker rm airstrip
 	ssh donnie@airstrip 'mkdir -p ~/airstrip/db'
 	scp ./.env donnie@airstrip:~/airstrip/
-	scp ./db/sql.db donnie@airstrip:~/airstrip/db/sql.db
 	ssh donnie@airstrip 'sudo docker run -d --restart on-failure -v ~/airstrip/db:/db --env-file ~/airstrip/.env --name airstrip donnieashok/airstrip:prod'
 	ssh donnie@airstrip 'rm ~/airstrip/.env'
 	@echo "Is live"

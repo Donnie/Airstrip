@@ -83,7 +83,7 @@ type View struct {
 
 // Saving is per month net effect
 type Saving struct {
-	Month     time.Time
+	Month     string
 	Income    int
 	Charge    int
 	Effect    int

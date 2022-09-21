@@ -23,14 +23,14 @@ func (st *State) CashTillNow(userID int64) int {
 
 	st.Orm.Raw(`SELECT SUM(
 		CASE 
-		WHEN ao.self AND ai.self = false THEN amount * -1 
-		WHEN ai.self AND ao.self = false THEN amount * 1 
+		WHEN ao.self = 1 AND ai.self = 0 THEN amount * -1 
+		WHEN ai.self = 1 AND ao.self = 0 THEN amount * 1 
 		END
-	)
+	) as sum
 	FROM records AS r 
 	JOIN accounts AS ai ON r.account_in_id = ai.id 
 	JOIN accounts AS ao ON r.account_out_id = ao.id 
-	WHERE r.mandate = false 
+	WHERE r.mandate = 0 
 	AND r.deleted_at IS NULL
 	AND r.user_id = ?`, userID).Scan(&res)
 
@@ -149,7 +149,7 @@ func (st *State) Predict(fut time.Time, userID int64) (out string) {
 			// because of telegram message size limitation
 			out += fmt.Sprintf(
 				"\n\n*%s:* `%d EUR`\nCharge: `%d EUR`\nIncome: `%d EUR`\nEffect: `%d EUR`",
-				save.Month.Format(monthFormat), (monthEnd+save.NetEffect)/100, save.Charge/100, save.Income/100, save.Effect/100,
+				save.Month, (monthEnd+save.NetEffect)/100, save.Charge/100, save.Income/100, save.Effect/100,
 			)
 		}
 	}
