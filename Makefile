@@ -5,6 +5,7 @@ dev:
 	docker-compose --env-file ./.env.local up
 
 sql:
+	scp donnie@airstrip:/home/donnie/airstrip/db/sql.db ./db/sql.db
 	sqlite3 db/sql.db
 
 clean:
@@ -22,11 +23,12 @@ deploy: build
 
 # Prod
 live:
-	ssh root@airstrip docker pull donnieashok/airstrip:prod
-	- ssh root@airstrip docker stop airstrip
-	- ssh root@airstrip docker rm airstrip
-	scp ./.env root@airstrip:/home/airstrip/
-	scp ./db/sql.db root@airstrip:/home/airstrip/db/
-	ssh root@airstrip docker run -d --restart on-failure -v /home/airstrip/db:/db --env-file /home/airstrip/.env --name airstrip donnieashok/airstrip:prod
-	ssh root@airstrip rm /home/airstrip/.env
+	ssh donnie@airstrip sudo docker pull donnieashok/airstrip:prod
+	- ssh donnie@airstrip sudo docker stop airstrip
+	- ssh donnie@airstrip sudo docker rm airstrip
+	ssh donnie@airstrip 'mkdir -p ~/airstrip/db'
+	scp ./.env donnie@airstrip:~/airstrip/
+	scp ./db/sql.db donnie@airstrip:~/airstrip/db/sql.db
+	ssh donnie@airstrip 'sudo docker run -d --restart on-failure -v ~/airstrip/db:/db --env-file ~/airstrip/.env --name airstrip donnieashok/airstrip:prod'
+	ssh donnie@airstrip 'rm ~/airstrip/.env'
 	@echo "Is live"

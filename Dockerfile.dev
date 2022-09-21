@@ -21,7 +21,5 @@ RUN go mod download
 # Copy the code into the container
 COPY . .
 
-EXPOSE $PORT
-
 # Run test
 # RUN go test ./...
