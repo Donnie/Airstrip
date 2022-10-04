@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Donnie/Airstrip/ptr"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
@@ -17,9 +18,9 @@ func (st *State) handleSavings(m *tb.Message) {
 	st.Bot.Send(m.Sender, savings, tb.ModeHTML)
 }
 
-// Analyse generates savings analyse for userID for the past
+// Analyse generates savings analysis for userID for the past
 func (st *State) Analyse(past time.Time, userID int64) (out string) {
-	savings := st.PastSavings(userID, past)
+	savings := st.PastSavings(userID, past, nil)
 	cash := st.CashTillNow(userID)
 	out += fmt.Sprintf("Assets: %.2f EUR\n\n", float64(cash)/100)
 
@@ -35,18 +36,42 @@ func (st *State) Analyse(past time.Time, userID int64) (out string) {
 	return
 }
 
+// CashTillNow calculates Summation of all assets till now
+func (st *State) CashTillNow(userID int64) int {
+	var res struct{ Sum int }
+
+	st.Orm.Raw(`SELECT SUM(
+		CASE 
+		WHEN ao.self = 1 AND ai.self = 0 THEN amount * -1 
+		WHEN ai.self = 1 AND ao.self = 0 THEN amount * 1 
+		END
+	) as sum
+	FROM records AS r 
+	JOIN accounts AS ai ON r.account_in_id = ai.id 
+	JOIN accounts AS ao ON r.account_out_id = ao.id 
+	WHERE r.mandate = 0 
+	AND r.deleted_at IS NULL
+	AND r.user_id = ?`, userID).Scan(&res)
+
+	return res.Sum
+}
+
 // PastSavings calculates savings till a past date
-func (st *State) PastSavings(userID int64, past time.Time) (savings []Saving) {
+func (st *State) PastSavings(userID int64, start time.Time, end *time.Time) (savings []Saving) {
+	if end == nil {
+		end = ptr.Time(time.Now())
+	}
+
 	query := fmt.Sprintf(`
 		WITH RECURSIVE MonthDates(monthDate) AS (
-			SELECT '%s'
+			SELECT DATETIME('%s 00:00:00')
 			UNION ALL
-			SELECT date(monthDate, '+1 month')
+			SELECT DATETIME(monthDate, '+1 month')
 			FROM MonthDates
-			WHERE date(monthDate, '+1 month') < CURRENT_TIMESTAMP
+			WHERE DATETIME(monthDate, '+1 month') < DATETIME('%s 23:59:59')
 		)
 		SELECT
-			endDate as month,
+			startDate as month,
 			COALESCE((
 				SELECT
 					SUM(
@@ -60,17 +85,15 @@ func (st *State) PastSavings(userID int64, past time.Time) (savings []Saving) {
 				LEFT JOIN accounts AS aco ON r.account_out_id = aco.id
 				WHERE
 					r.deleted_at IS NULL
-					AND (aci.self = 0 OR aco.self = 0)
-					AND r.date IS NOT NULL
 					AND r.date BETWEEN months.startDate AND months.endDate
 					AND r.user_id = %d
 			), 0) as effect
 		FROM (
-			SELECT date(monthDate, 'start of month') as startDate,
-				date(monthDate, '+1 month', 'start of month', '-1 day') as endDate
+			SELECT DATETIME(monthDate, 'start of month') as startDate,
+				DATETIME(monthDate, '+1 month', 'start of month') as endDate
 			FROM MonthDates
 		) AS months
-	`, past.Format("2006-01-02"), userID)
+	`, start.Format("2006-01-02"), end.Format("2006-01-02"), userID)
 
 	st.Orm.Raw(query).Scan(&savings)
 	return
