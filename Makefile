@@ -4,8 +4,10 @@ builddev:
 dev:
 	docker-compose --env-file ./.env.local up
 
-sql:
+dump:
 	scp donnie@airstrip:/home/donnie/airstrip/db/sql.db ./db/sql.db
+
+sql:
 	sqlite3 db/sql.db
 
 clean:

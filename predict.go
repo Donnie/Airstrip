@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
+	"github.com/Donnie/Airstrip/ptr"
+	"github.com/sajari/regression"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
@@ -12,29 +15,18 @@ func (st *State) handlePredict(m *tb.Message) {
 	if err != nil {
 		fut = time.Now().AddDate(1, 0, 0)
 	}
+	fut = getMonthLastDate(fut)
 
-	predictions := st.Predict(fut, m.Sender.ID)
-	st.Bot.Send(m.Sender, predictions, tb.ModeMarkdownV2)
-}
+	predictions, plotImage := st.PredictRegress(fut, m.Sender.ID)
 
-// CashTillNow calculates Summation of all assets till now
-func (st *State) CashTillNow(userID int64) int {
-	var res struct{ Sum int }
+	st.Bot.Send(m.Sender, &tb.Photo{
+		File:    tb.FromDisk(plotImage),
+		Width:   1536,
+		Height:  768,
+		Caption: predictions,
+	}, tb.ModeHTML)
 
-	st.Orm.Raw(`SELECT SUM(
-		CASE 
-		WHEN ao.self = 1 AND ai.self = 0 THEN amount * -1 
-		WHEN ai.self = 1 AND ao.self = 0 THEN amount * 1 
-		END
-	) as sum
-	FROM records AS r 
-	JOIN accounts AS ai ON r.account_in_id = ai.id 
-	JOIN accounts AS ao ON r.account_out_id = ao.id 
-	WHERE r.mandate = 0 
-	AND r.deleted_at IS NULL
-	AND r.user_id = ?`, userID).Scan(&res)
-
-	return res.Sum
+	os.Remove(plotImage)
 }
 
 // PlannedCurrentMonth calculates remaining costs and incomes for current month
@@ -137,10 +129,10 @@ func (st *State) Predict(fut time.Time, userID int64) (out string) {
 	monthEnd := cash - cost + income
 	savings := st.FutureSavings(userID, fut)
 
-	out += fmt.Sprintf("*Prediction till EOM %s*\n\n", fut.Format(monthFormat))
-	out += fmt.Sprintf("*%s:* `%d EUR`\n", time.Now().Format(monthFormat), monthEnd/100)
-	out += fmt.Sprintf("Planned Expenses: `%d EUR`\n", cost/100)
-	out += fmt.Sprintf("Receivables: `%d EUR`\n", income/100)
+	out += fmt.Sprintf("<strong>Prediction till EOM %s</strong><br /><br />", fut.Format(monthFormat))
+	out += fmt.Sprintf("<strong>%s:</strong> `%d EUR`<br />", time.Now().Format(monthFormat), monthEnd/100)
+	out += fmt.Sprintf("Planned Expenses: `%d EUR`<br />", cost/100)
+	out += fmt.Sprintf("Receivables: `%d EUR`<br />", income/100)
 	out += fmt.Sprintf("Assets: `%d EUR`", cash/100)
 
 	for i, save := range savings {
@@ -148,10 +140,52 @@ func (st *State) Predict(fut time.Time, userID int64) (out string) {
 			// show only last twelve months
 			// because of telegram message size limitation
 			out += fmt.Sprintf(
-				"\n\n*%s:* `%d EUR`\nCharge: `%d EUR`\nIncome: `%d EUR`\nEffect: `%d EUR`",
+				"<br /><br /><strong>%s:</strong> `%d EUR`<br />Charge: `%d EUR`<br />Income: `%d EUR`<br />Effect: `%d EUR`",
 				save.Month, (monthEnd+save.NetEffect)/100, save.Charge/100, save.Income/100, save.Effect/100,
 			)
 		}
 	}
 	return
+}
+
+// PredictRegress generates prediction using Linear Regression on savings
+func (st *State) PredictRegress(fut time.Time, userID int64) (string, string) {
+	// find first date
+	var start struct {
+		Date time.Time
+	}
+	st.Orm.Raw("SELECT date FROM records WHERE date IS NOT NULL ORDER BY date asc LIMIT 1;").Scan(&start)
+
+	start.Date = start.Date.AddDate(0, 0, -1)
+
+	// find previous savings
+	savings := st.PastSavings(userID, start.Date, ptr.Time(getLastMonthLastDate()))
+
+	// train model by linear regression
+	r := new(regression.Regression)
+	r.SetObserved("Income")
+	r.SetVar(0, "Month")
+
+	total := float64(0)
+	totals := []float64{}
+	firstMonthUnix := getMonthLastDate(parseDate(savings[0].Month)).Unix()
+	periods := []float64{}
+	for _, save := range savings {
+		total += float64(save.Effect) / 100
+		totals = append(totals, total)
+		monthUnix := getMonthLastDate(parseDate(save.Month)).Unix()
+		periods = append(periods, float64(monthUnix-firstMonthUnix))
+		r.Train(regression.DataPoint(float64(total), []float64{float64(monthUnix)}))
+	}
+	r.Run()
+
+	// find out future potential
+	futureAmt, _ := r.Predict([]float64{float64(fut.Unix())})
+
+	// plot diagram
+	totals = append(totals, futureAmt)
+	periods = append(periods, float64(fut.Unix()-firstMonthUnix))
+	filename := plotImage(totals, periods)
+
+	return fmt.Sprintf("<strong>Total assets as on %s:</strong> <pre>%.2f</pre>", fut.Format(monthFormat), futureAmt), filename
 }
