@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Donnie/Airstrip/ptr"
+	"github.com/sajari/regression"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
@@ -12,8 +14,9 @@ func (st *State) handlePredict(m *tb.Message) {
 	if err != nil {
 		fut = time.Now().AddDate(1, 0, 0)
 	}
+	fut = getMonthLastDate(fut)
 
-	predictions := st.Predict(fut, m.Sender.ID)
+	predictions := st.PredictRegress(fut, m.Sender.ID)
 	st.Bot.Send(m.Sender, predictions, tb.ModeHTML)
 }
 
@@ -134,4 +137,35 @@ func (st *State) Predict(fut time.Time, userID int64) (out string) {
 		}
 	}
 	return
+}
+
+// PredictRegress generates prediction using Linear Regression on savings
+func (st *State) PredictRegress(fut time.Time, userID int64) string {
+	// find first date
+	var start struct {
+		Date time.Time
+	}
+	st.Orm.Raw("SELECT date FROM records WHERE date IS NOT NULL ORDER BY date asc LIMIT 1;").Scan(&start)
+
+	start.Date = start.Date.AddDate(0, 0, -1)
+
+	// find previous savings
+	savings := st.PastSavings(userID, start.Date, ptr.Time(getLastMonthLastDate()))
+
+	// train model by linear regression
+	r := new(regression.Regression)
+	r.SetObserved("Income")
+	r.SetVar(0, "Month")
+	total := float64(0)
+	for _, save := range savings {
+		total += float64(save.Effect) / 100
+		monthUnix := getMonthLastDate(parseDate(save.Month)).Unix()
+		r.Train(regression.DataPoint(float64(total), []float64{float64(monthUnix)}))
+	}
+	r.Run()
+
+	// find out future potential
+	futureAmt, _ := r.Predict([]float64{float64(fut.Unix())})
+
+	return fmt.Sprintf("%.2f", futureAmt)
 }

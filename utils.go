@@ -5,6 +5,10 @@ import (
 	"time"
 
 	"github.com/jinzhu/now"
+	"gonum.org/v1/plot"
+	"gonum.org/v1/plot/plotter"
+	"gonum.org/v1/plot/plotutil"
+	"gonum.org/v1/plot/vg"
 )
 
 func parseDate(input string) (out time.Time) {
@@ -34,4 +38,17 @@ func getMin(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func getMonthLastDate(month time.Time) time.Time {
+	currentYear, currentMonth, _ := month.Date()
+	currentLocation := month.Location()
+	return time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation).AddDate(0, 1, -1)
+}
+
+func getLastMonthLastDate() time.Time {
+	now := time.Now()
+	currentYear, currentMonth, _ := now.Date()
+	currentLocation := now.Location()
+	return time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation).AddDate(0, 0, -1)
 }
