@@ -3,8 +3,7 @@
 .env.local
 .git
 .goreload
-airstrip.sql
 db
-lite
+images
 main
 Makefile

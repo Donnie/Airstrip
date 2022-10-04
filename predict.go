@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/Donnie/Airstrip/ptr"
@@ -16,8 +17,16 @@ func (st *State) handlePredict(m *tb.Message) {
 	}
 	fut = getMonthLastDate(fut)
 
-	predictions := st.PredictRegress(fut, m.Sender.ID)
-	st.Bot.Send(m.Sender, predictions, tb.ModeHTML)
+	predictions, plotImage := st.PredictRegress(fut, m.Sender.ID)
+
+	st.Bot.Send(m.Sender, &tb.Photo{
+		File:    tb.FromDisk(plotImage),
+		Width:   1536,
+		Height:  768,
+		Caption: predictions,
+	}, tb.ModeHTML)
+
+	os.Remove(plotImage)
 }
 
 // PlannedCurrentMonth calculates remaining costs and incomes for current month
@@ -140,7 +149,7 @@ func (st *State) Predict(fut time.Time, userID int64) (out string) {
 }
 
 // PredictRegress generates prediction using Linear Regression on savings
-func (st *State) PredictRegress(fut time.Time, userID int64) string {
+func (st *State) PredictRegress(fut time.Time, userID int64) (string, string) {
 	// find first date
 	var start struct {
 		Date time.Time
@@ -156,10 +165,16 @@ func (st *State) PredictRegress(fut time.Time, userID int64) string {
 	r := new(regression.Regression)
 	r.SetObserved("Income")
 	r.SetVar(0, "Month")
+
 	total := float64(0)
+	totals := []float64{}
+	firstMonthUnix := getMonthLastDate(parseDate(savings[0].Month)).Unix()
+	periods := []float64{}
 	for _, save := range savings {
 		total += float64(save.Effect) / 100
+		totals = append(totals, total)
 		monthUnix := getMonthLastDate(parseDate(save.Month)).Unix()
+		periods = append(periods, float64(monthUnix-firstMonthUnix))
 		r.Train(regression.DataPoint(float64(total), []float64{float64(monthUnix)}))
 	}
 	r.Run()
@@ -167,5 +182,10 @@ func (st *State) PredictRegress(fut time.Time, userID int64) string {
 	// find out future potential
 	futureAmt, _ := r.Predict([]float64{float64(fut.Unix())})
 
-	return fmt.Sprintf("%.2f", futureAmt)
+	// plot diagram
+	totals = append(totals, futureAmt)
+	periods = append(periods, float64(fut.Unix()-firstMonthUnix))
+	filename := plotImage(totals, periods)
+
+	return fmt.Sprintf("<strong>Total assets as on %s:</strong> <pre>%.2f</pre>", fut.Format(monthFormat), futureAmt), filename
 }

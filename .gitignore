@@ -2,6 +2,5 @@ db
 .env.local
 .env
 .goreload
-airstrip.sql
 .vscode
-lite
+images

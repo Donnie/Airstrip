@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -51,4 +52,24 @@ func getLastMonthLastDate() time.Time {
 	currentYear, currentMonth, _ := now.Date()
 	currentLocation := now.Location()
 	return time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation).AddDate(0, 0, -1)
+}
+
+func plotImage(totals, periods []float64) (filename string) {
+	p := plot.New()
+	p.Title.Text = "Savings"
+	p.X.Label.Text = "Months"
+	p.Y.Label.Text = "EUR"
+
+	pts := make(plotter.XYs, len(totals))
+	for i, total := range totals {
+		pts[i].Y = float64(total)
+		pts[i].X = float64(periods[i]/2629800)
+	}
+
+	plotutil.AddLinePoints(p, "Savings", pts)
+
+	// Save the plot to a PNG file.
+	filename = fmt.Sprintf("images/points-%d.png", time.Now().Unix())
+	p.Save(8*vg.Inch, 4*vg.Inch, filename)
+	return
 }
