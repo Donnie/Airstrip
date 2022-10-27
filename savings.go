@@ -22,14 +22,14 @@ func (st *State) handleSavings(m *tb.Message) {
 func (st *State) Analyse(past time.Time, userID int64) (out string) {
 	savings := st.PastSavings(userID, past, nil)
 	cash := st.CashTillNow(userID)
-	out += fmt.Sprintf("Assets: %.2f EUR\n\n", float64(cash)/100)
+	out += fmt.Sprintf("Assets: €%.2f\n\n", float64(cash)/100)
 
 	for _, save := range savings {
 		// show only last twelve months
 		// because of telegram message size limitation
 		dateTime := parseDate(save.Month)
 		out += fmt.Sprintf(
-			"<strong>%s:</strong> <code>%.2f EUR</code>\n",
+			"<strong>%s:</strong> <code>€%.2f</code>\n",
 			dateTime.Format(monthFormat), (float64(save.Effect) / 100),
 		)
 	}

@@ -32,10 +32,10 @@ func (st *State) handleStand(m *tb.Message) {
 			if stand.Liquid {
 				totalLiquid += stand.Stand
 			}
-			output += fmt.Sprintf("*%s*: `%.2f EUR`\n", stand.Name, stand.Stand)
+			output += fmt.Sprintf("<strong>%s</strong>: <code>€%.2f</code>\n", stand.Name, stand.Stand)
 		}
-		output += fmt.Sprintf("\n*Liquid*: `%.2f EUR`", totalLiquid)
-		output += fmt.Sprintf("\n*Total*: `%.2f EUR`", totalAmount)
+		output += fmt.Sprintf("\n<strong>Liquid</strong>: <code>€%.2f</code>", totalLiquid)
+		output += fmt.Sprintf("\n<strong>Total</strong>: <code>€%.2f</code>", totalAmount)
 	} else {
 		if len(payload) > 1 {
 			mon, _ = time.Parse(monthFormat, payload[1]+" "+payload[2])
@@ -52,9 +52,9 @@ func (st *State) handleStand(m *tb.Message) {
 		}
 
 		amount := getStand(st.Orm, account.ID, mon)
-		output = fmt.Sprintf("*Standing*: `%.2f EUR`", amount)
+		output = fmt.Sprintf("<strong>Standing</strong>: <code>€%.2f</code>", amount)
 	}
-	st.Bot.Send(m.Sender, output, tb.ModeMarkdown)
+	st.Bot.Send(m.Sender, output, tb.ModeHTML)
 }
 
 func getStand(db *gorm.DB, acc uint, mon time.Time) float64 {
