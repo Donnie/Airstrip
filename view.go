@@ -47,10 +47,10 @@ func (st *State) handleView(m *tb.Message) {
 	)
 	st.Orm.Raw(query).Scan(&lines)
 
-	output := fmt.Sprintf("*Overview of %s*\n", t.Format(monthFormat))
+	output := fmt.Sprintf("<strong>Overview of %s</strong>\n", t.Format(monthFormat))
 	output += prepareView(viewLines(lines))
 
-	st.Bot.Send(m.Sender, output, tb.ModeMarkdown)
+	st.Bot.Send(m.Sender, output, tb.ModeHTML)
 }
 
 func viewLines(lines []Line) (views [4]View) {
@@ -71,9 +71,9 @@ func viewLines(lines []Line) (views [4]View) {
 
 func prepareView(views [4]View) (out string) {
 	for _, view := range views {
-		out += fmt.Sprintf("\n*%s*: `%.2f` EUR\n", view.Type, view.Total)
+		out += fmt.Sprintf("\n<strong>%s</strong>: <code>€%.2f</code>\n", view.Type, view.Total)
 		for _, line := range view.Lines {
-			out += fmt.Sprintf("`%s: `%.2f` EUR`\n", line.Name, line.Amount)
+			out += fmt.Sprintf("<code>%s: €%.2f</code>\n", line.Name, line.Amount)
 		}
 	}
 	return

@@ -130,17 +130,17 @@ func (st *State) Predict(fut time.Time, userID int64) (out string) {
 	savings := st.FutureSavings(userID, fut)
 
 	out += fmt.Sprintf("<strong>Prediction till EOM %s</strong><br /><br />", fut.Format(monthFormat))
-	out += fmt.Sprintf("<strong>%s:</strong> `%d EUR`<br />", time.Now().Format(monthFormat), monthEnd/100)
-	out += fmt.Sprintf("Planned Expenses: `%d EUR`<br />", cost/100)
-	out += fmt.Sprintf("Receivables: `%d EUR`<br />", income/100)
-	out += fmt.Sprintf("Assets: `%d EUR`", cash/100)
+	out += fmt.Sprintf("<strong>%s:</strong> <code>€%d</code><br />", time.Now().Format(monthFormat), monthEnd/100)
+	out += fmt.Sprintf("Planned Expenses: <code>€%d</code><br />", cost/100)
+	out += fmt.Sprintf("Receivables: <code>€%d</code><br />", income/100)
+	out += fmt.Sprintf("Assets: <code>€%d</code>", cash/100)
 
 	for i, save := range savings {
 		if len(savings)-i <= 12 {
 			// show only last twelve months
 			// because of telegram message size limitation
 			out += fmt.Sprintf(
-				"<br /><br /><strong>%s:</strong> `%d EUR`<br />Charge: `%d EUR`<br />Income: `%d EUR`<br />Effect: `%d EUR`",
+				"<br /><br /><strong>%s:</strong> <code>€%d</code><br />Charge: <code>€%d</code><br />Income: <code>€%d</code><br />Effect: <code>€%d</code>",
 				save.Month, (monthEnd+save.NetEffect)/100, save.Charge/100, save.Income/100, save.Effect/100,
 			)
 		}

@@ -1,6 +1,6 @@
 module github.com/Donnie/Airstrip
 
-go 1.18
+go 1.19
 
 require (
 	github.com/golang-migrate/migrate/v4 v4.15.1
