@@ -21,7 +21,7 @@ func initSQLDB() *gorm.DB {
 	sqlDB, _ := db.DB()
 	sqlDB.SetConnMaxLifetime(time.Hour)
 	sqlDB.SetMaxOpenConns(10)
-	migrateSqlUp()
+	migrateSQLUp()
 
 	return db
 }

@@ -11,7 +11,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func migrateSqlUp() {
+func migrateSQLUp() {
 	db, err := sql.Open("sqlite", os.Getenv("DB_FILE"))
 	if err != nil {
 		fmt.Println("Failed to open SQL file")

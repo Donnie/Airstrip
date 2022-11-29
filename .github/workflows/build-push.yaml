@@ -23,3 +23,16 @@ jobs:
       with:
         tags: donnieashok/airstrip:prod
         push: true
+    - name: Pull image into production
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.GCP_HOST }}
+        username: ${{ secrets.GCP_USER }}
+        key: ${{ secrets.GCP_SECRET }}
+        script: |
+          sudo docker pull donnieashok/airstrip:prod
+          sudo docker stop airstrip || true
+          sudo docker rm airstrip || true
+          echo ${{ secrets.ENV }} > ~/airstrip/.env
+          sudo docker run -d --restart on-failure -v ~/airstrip/db:/db -v ~/airstrip/images:/images --env-file ~/airstrip/.env --name airstrip donnieashok/airstrip:prod
+          rm ~/airstrip/.env
