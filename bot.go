@@ -9,6 +9,8 @@ func (st *State) startBot() {
 	st.Bot.Handle("/cancel", st.handleCancel)
 	st.Bot.Handle("/delete", st.handleDelete)
 	st.Bot.Handle("/help", st.handleHelp)
+
+	st.Bot.Handle("/expenses", st.handleExpenses)
 	st.Bot.Handle("/predict", st.handlePredict)
 	st.Bot.Handle("/record", st.handleRecord)
 	st.Bot.Handle("/recur", st.handleRecord)
