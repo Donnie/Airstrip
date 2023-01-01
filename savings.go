@@ -14,12 +14,12 @@ func (st *State) handleSavings(m *tb.Message) {
 		past = time.Now().AddDate(-1, 0, 0)
 	}
 
-	savings := st.Analyse(past, m.Sender.ID)
+	savings := st.SavingsAnalyse(past, m.Sender.ID)
 	st.Bot.Send(m.Sender, savings, tb.ModeHTML)
 }
 
-// Analyse generates savings analysis for userID for the past
-func (st *State) Analyse(past time.Time, userID int64) (out string) {
+// SavingsAnalyse generates savings analysis for userID for the past
+func (st *State) SavingsAnalyse(past time.Time, userID int64) (out string) {
 	savings := st.PastSavings(userID, past, nil)
 	cash := st.CashTillNow(userID)
 	out += fmt.Sprintf("Assets: €%.2f\n\n", float64(cash)/100)
@@ -90,7 +90,7 @@ func (st *State) PastSavings(userID int64, start time.Time, end *time.Time) (sav
 			), 0) as effect
 		FROM (
 			SELECT DATETIME(monthDate, 'start of month') as startDate,
-				DATETIME(monthDate, '+1 month', 'start of month') as endDate
+				DATETIME(monthDate, 'start of month', '+1 month', '-1 second') as endDate
 			FROM MonthDates
 		) AS months
 	`, start.Format("2006-01-02"), end.Format("2006-01-02"), userID)
