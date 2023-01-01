@@ -8,23 +8,25 @@ import (
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
-func (st *State) handleSavings(m *tb.Message) {
+// handleExpenses handles the expenses page
+func (st *State) handleExpenses(m *tb.Message) {
+	// get date from input
 	past, err := time.Parse(monthFormat, m.Payload)
+
+	// if date is not provided, use current month
 	if err != nil {
 		past = time.Now().AddDate(-1, 0, 0)
 	}
 
-	savings := st.SavingsAnalyse(past, m.Sender.ID)
-	st.Bot.Send(m.Sender, savings, tb.ModeHTML)
+	expenses := st.ExpensesAnalyse(past, m.Sender.ID)
+	st.Bot.Send(m.Sender, expenses, tb.ModeHTML)
 }
 
-// SavingsAnalyse generates savings analysis for userID for the past
-func (st *State) SavingsAnalyse(past time.Time, userID int64) (out string) {
-	savings := st.PastSavings(userID, past, nil)
-	cash := st.CashTillNow(userID)
-	out += fmt.Sprintf("Assets: €%.2f\n\n", float64(cash)/100)
+// ExpensesAnalyse returns the expenses till the given month
+func (st *State) ExpensesAnalyse(past time.Time, userID int64) (out string) {
+	expenses := st.PastExpenses(userID, past, nil)
 
-	for _, save := range savings {
+	for _, save := range expenses {
 		// show only last twelve months
 		// because of telegram message size limitation
 		dateTime := parseDate(save.Month)
@@ -36,28 +38,8 @@ func (st *State) SavingsAnalyse(past time.Time, userID int64) (out string) {
 	return
 }
 
-// CashTillNow calculates Summation of all assets till now
-func (st *State) CashTillNow(userID int64) int {
-	var res struct{ Sum int }
-
-	st.Orm.Raw(`SELECT SUM(
-		CASE 
-		WHEN ao.self = 1 AND ai.self = 0 THEN amount * -1 
-		WHEN ai.self = 1 AND ao.self = 0 THEN amount * 1 
-		END
-	) as sum
-	FROM records AS r 
-	JOIN accounts AS ai ON r.account_in_id = ai.id 
-	JOIN accounts AS ao ON r.account_out_id = ao.id 
-	WHERE r.mandate = 0 
-	AND r.deleted_at IS NULL
-	AND r.user_id = ?`, userID).Scan(&res)
-
-	return res.Sum
-}
-
-// PastSavings calculates savings till a past date
-func (st *State) PastSavings(userID int64, start time.Time, end *time.Time) (savings []Saving) {
+// PastExpenses returns the expenses between the given months
+func (st *State) PastExpenses(userID int64, start time.Time, end *time.Time) (savings []Saving) {
 	if end == nil {
 		end = ptr.Time(time.Now())
 	}
@@ -73,11 +55,10 @@ func (st *State) PastSavings(userID int64, start time.Time, end *time.Time) (sav
 		SELECT
 			startDate as month,
 			COALESCE((
-				SELECT
+				SELECT 
 					SUM(
 						CASE
-							WHEN aci.self = 1 AND aco.self = 0 THEN amount
-							WHEN aci.self = 0 AND aco.self = 1 THEN amount * -1
+							WHEN aci.self = 0 AND aco.self = 1 THEN amount
 						END
 					) as delta
 				FROM records AS r

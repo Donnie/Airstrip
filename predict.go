@@ -17,7 +17,7 @@ func (st *State) handlePredict(m *tb.Message) {
 	}
 	fut = getMonthLastDate(fut)
 
-	predictions, plotImage := st.PredictRegress(fut, m.Sender.ID)
+	predictions, plotImage := st.PredictLinear(fut, m.Sender.ID)
 
 	st.Bot.Send(m.Sender, &tb.Photo{
 		File:    tb.FromDisk(plotImage),
@@ -148,8 +148,8 @@ func (st *State) Predict(fut time.Time, userID int64) (out string) {
 	return
 }
 
-// PredictRegress generates prediction using Linear Regression on savings
-func (st *State) PredictRegress(fut time.Time, userID int64) (string, string) {
+// PredictLinear generates prediction using Linear Regression on savings
+func (st *State) PredictLinear(fut time.Time, userID int64) (string, string) {
 	// find first date
 	var start struct {
 		Date time.Time
