@@ -28,7 +28,7 @@ func (convo *Convo) expectNext(db *gorm.DB, expect string) {
 		return
 	}
 	db.Unscoped().Delete(&convo)
-	convo.response = "Record stored\\!"
+	convo.response = "Record stored!"
 }
 
 func (convo *Convo) expectAmount(db *gorm.DB, input string) {

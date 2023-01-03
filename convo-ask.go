@@ -109,7 +109,6 @@ func (convo *Convo) getRecentAccountBtns(db *gorm.DB, start int, inOut string) {
 	for i := 0; i < numberRows; i++ {
 		var btns []tb.Btn
 		for j := i * btnsPerRow; j < getMin(getMin((i+1)*btnsPerRow, (numberRows*btnsPerRow-1)), len(accounts)); j++ {
-			fmt.Println(getMin((i+1)*btnsPerRow, (numberRows*btnsPerRow - 1)))
 			btns = append(btns, convo.menu.Data(*accounts[j].Name, *accounts[j].Name))
 		}
 		if i == (numberRows-1) && len(accounts) > (numberRows*btnsPerRow-1) {
@@ -121,19 +120,20 @@ func (convo *Convo) getRecentAccountBtns(db *gorm.DB, start int, inOut string) {
 }
 
 func genQues(ask string) (out string) {
-	switch ask {
-	case "account in":
-		out = "Which account to be credited?"
-	case "account out":
-		out = "Which account to be debited?"
-	case "account new in", "account new out":
-		out = "No account found by that name\\. Create one?"
-	case "account new self in", "account new self out":
-		out = "Is this your own account?"
-	case "from date", "till date":
-		out = fmt.Sprintf("What is the %s?\n\nSpecify in this format: *_Jan 2006_*", ask)
-	default:
-		out = fmt.Sprintf("What is the %s?", ask)
+	answers := map[string]string{
+		"account in": "Which account to be credited?",
+		"account out": "Which account to be debited?",
+		"account new in": "No account found by that name. Create one?",
+		"account new out": "No account found by that name. Create one?",
+		"account new self in": "Is this your own account?",
+		"account new self out": "Is this your own account?",
+		"from date": "What is the starting date?<br /><br />Specify in this format: <pre>Jan 2006</pre>",
+		"till date": "What is the ending date?<br /><br />Specify in this format: <pre>Jan 2006</pre>",
 	}
-	return
+
+	if val, ok := answers[ask]; ok {
+		return val
+	}
+
+	return "What is the " + ask + "?"
 }
