@@ -149,8 +149,9 @@ func genQues(ask string) (out string) {
 		"account new self in":    "Is this your own account?",
 		"account new self out":   "Is this your own account?",
 		"account out":            "Which account to be debited?",
-		"from date":              "What is the starting date?<br /><br />Specify in this format: <pre>Jan 2006</pre>",
-		"till date":              "What is the ending date?<br /><br />Specify in this format: <pre>Jan 2006</pre>",
+		"date":                   "What is the date?\n\nYou may also specify in this format: <pre>2 Jan</pre>",
+		"from date":              "What is the starting date?\n\nSpecify in this format: <pre>Jan 2006</pre>",
+		"till date":              "What is the ending date?\n\nSpecify in this format: <pre>Jan 2006</pre>",
 	}
 
 	if val, ok := answers[ask]; ok {
