@@ -85,10 +85,20 @@ func (convo *Convo) expectAccountInQue(db *gorm.DB, input string) {
 			Where("id = ?", *convo.ContextID).
 			Update("account_in_id", account.ID)
 
-		convo.askCreateAccountSelfIn(inp[1])
+		convo.askCurrencyIn(inp[1])
 	default:
 		convo.askAccountIn(db)
 	}
+}
+
+func (convo *Convo) expectAccountCurrIn(db *gorm.DB, input string) {
+	inp := strings.Split(input, "-")
+	db.Model(&Account{}).
+		Where("name = ?", inp[1]).
+		Where("user_id = ?", *convo.UserID).
+		Update("currency", inp[0])
+
+	convo.askCreateAccountSelfIn(inp[1])
 }
 
 func (convo *Convo) expectCreateAccountSelfIn(db *gorm.DB, input string) {
@@ -155,6 +165,7 @@ func (convo *Convo) expectAccountOutQue(db *gorm.DB, input string) {
 		account.Currency = ptr.String("EUR")
 		account.Name = &inp[1]
 		account.Self = ptr.Bool(false)
+		account.Liquid = ptr.Bool(false)
 		account.UserID = convo.UserID
 		db.Create(&account)
 
@@ -162,10 +173,20 @@ func (convo *Convo) expectAccountOutQue(db *gorm.DB, input string) {
 			Where("id = ?", *convo.ContextID).
 			Update("account_out_id", account.ID)
 
-		convo.askCreateAccountSelfOut(inp[1])
+		convo.askCurrencyOut(inp[1])
 	default:
 		convo.askAccountOut(db)
 	}
+}
+
+func (convo *Convo) expectAccountCurrOut(db *gorm.DB, input string) {
+	inp := strings.Split(input, "-")
+	db.Model(&Account{}).
+		Where("name = ?", inp[1]).
+		Where("user_id = ?", *convo.UserID).
+		Update("currency", inp[0])
+
+	convo.askCreateAccountSelfOut(inp[1])
 }
 
 func (convo *Convo) expectCreateAccountSelfOut(db *gorm.DB, input string) {

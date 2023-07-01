@@ -27,6 +27,30 @@ func (convo *Convo) askCreateAccountIn(input string) {
 	)
 }
 
+func (convo *Convo) askCurrencyIn(input string) {
+	convo.Expect = ptr.String("account currency in")
+	convo.menu.Inline(
+		convo.menu.Row(
+			convo.menu.Data("€", "EUR-"+input),
+			convo.menu.Data("£", "GBP-"+input),
+			convo.menu.Data("₹", "INR-"+input),
+			convo.menu.Data("$", "USD-"+input),
+		),
+	)
+}
+
+func (convo *Convo) askCurrencyOut(input string) {
+	convo.Expect = ptr.String("account currency out")
+	convo.menu.Inline(
+		convo.menu.Row(
+			convo.menu.Data("€", "EUR-"+input),
+			convo.menu.Data("£", "GBP-"+input),
+			convo.menu.Data("₹", "INR-"+input),
+			convo.menu.Data("$", "USD-"+input),
+		),
+	)
+}
+
 func (convo *Convo) askCreateAccountSelfIn(input string) {
 	convo.Expect = ptr.String("account new self in")
 	convo.menu.Inline(
@@ -143,6 +167,8 @@ func genQues(ask string) (out string) {
 	answers := map[string]string{
 		"account in":             "Which account to be credited?",
 		"account new in":         "No account found by that name. Create one?",
+		"account currency in":    "What is the currency of this account?",
+		"account currency out":   "What is the currency of this account?",
 		"account new liquid in":  "Is this a liquid account?",
 		"account new liquid out": "Is this a liquid account?",
 		"account new out":        "No account found by that name. Create one?",

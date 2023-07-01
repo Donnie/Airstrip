@@ -35,6 +35,8 @@ func (st *State) handleContext(sender *tb.User, input string) {
 	convo.Handle("account out", convo.expectAccountOut)
 	convo.Handle("account new in", convo.expectAccountInQue)
 	convo.Handle("account new out", convo.expectAccountOutQue)
+	convo.Handle("account currency in", convo.expectAccountCurrIn)
+	convo.Handle("account currency out", convo.expectAccountCurrOut)
 	convo.Handle("account new self in", convo.expectCreateAccountSelfIn)
 	convo.Handle("account new self out", convo.expectCreateAccountSelfOut)
 	convo.Handle("account new liquid in", convo.expectUpdateLiquidIn)
