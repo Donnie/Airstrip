@@ -77,6 +77,7 @@ func (convo *Convo) expectAccountInQue(db *gorm.DB, input string) {
 		account.Currency = ptr.String("EUR")
 		account.Name = &inp[1]
 		account.Self = ptr.Bool(false)
+		account.Liquid = ptr.Bool(false)
 		account.UserID = convo.UserID
 		db.Create(&account)
 
@@ -98,6 +99,21 @@ func (convo *Convo) expectCreateAccountSelfIn(db *gorm.DB, input string) {
 			Where("name = ?", inp[1]).
 			Where("user_id = ?", *convo.UserID).
 			Update("self", true)
+
+		convo.askAccountLiquidIn(inp[1])
+	default:
+		convo.askAccountLiquidIn(inp[1])
+	}
+}
+
+func (convo *Convo) expectUpdateLiquidIn(db *gorm.DB, input string) {
+	inp := strings.Split(input, "-")
+	switch strings.ToLower(inp[0]) {
+	case "y":
+		db.Model(&Account{}).
+			Where("name = ?", inp[1]).
+			Where("user_id = ?", *convo.UserID).
+			Update("liquid", true)
 
 		convo.askAccountOut(db)
 	default:
@@ -160,6 +176,21 @@ func (convo *Convo) expectCreateAccountSelfOut(db *gorm.DB, input string) {
 			Where("name = ?", inp[1]).
 			Where("user_id = ?", *convo.UserID).
 			Update("self", true)
+
+		convo.askAccountLiquidOut(inp[1])
+	default:
+		convo.askAccountLiquidOut(inp[1])
+	}
+}
+
+func (convo *Convo) expectUpdateLiquidOut(db *gorm.DB, input string) {
+	inp := strings.Split(input, "-")
+	switch strings.ToLower(inp[0]) {
+	case "y":
+		db.Model(&Account{}).
+			Where("name = ?", inp[1]).
+			Where("user_id = ?", *convo.UserID).
+			Update("liquid", true)
 
 		convo.askDescription()
 	default:
