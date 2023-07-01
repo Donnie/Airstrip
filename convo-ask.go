@@ -62,6 +62,26 @@ func (convo *Convo) askCreateAccountSelfOut(input string) {
 	)
 }
 
+func (convo *Convo) askAccountLiquidIn(input string) {
+	convo.Expect = ptr.String("account new liquid in")
+	convo.menu.Inline(
+		convo.menu.Row(
+			convo.menu.Data("Yes", "y-"+input),
+			convo.menu.Data("No", "n-"+input),
+		),
+	)
+}
+
+func (convo *Convo) askAccountLiquidOut(input string) {
+	convo.Expect = ptr.String("account new liquid out")
+	convo.menu.Inline(
+		convo.menu.Row(
+			convo.menu.Data("Yes", "y-"+input),
+			convo.menu.Data("No", "n-"+input),
+		),
+	)
+}
+
 func (convo *Convo) askDescription() {
 	convo.Expect = ptr.String("description")
 }
@@ -121,14 +141,16 @@ func (convo *Convo) getRecentAccountBtns(db *gorm.DB, start int, inOut string) {
 
 func genQues(ask string) (out string) {
 	answers := map[string]string{
-		"account in": "Which account to be credited?",
-		"account out": "Which account to be debited?",
-		"account new in": "No account found by that name. Create one?",
-		"account new out": "No account found by that name. Create one?",
-		"account new self in": "Is this your own account?",
-		"account new self out": "Is this your own account?",
-		"from date": "What is the starting date?<br /><br />Specify in this format: <pre>Jan 2006</pre>",
-		"till date": "What is the ending date?<br /><br />Specify in this format: <pre>Jan 2006</pre>",
+		"account in":             "Which account to be credited?",
+		"account new in":         "No account found by that name. Create one?",
+		"account new liquid in":  "Is this a liquid account?",
+		"account new liquid out": "Is this a liquid account?",
+		"account new out":        "No account found by that name. Create one?",
+		"account new self in":    "Is this your own account?",
+		"account new self out":   "Is this your own account?",
+		"account out":            "Which account to be debited?",
+		"from date":              "What is the starting date?<br /><br />Specify in this format: <pre>Jan 2006</pre>",
+		"till date":              "What is the ending date?<br /><br />Specify in this format: <pre>Jan 2006</pre>",
 	}
 
 	if val, ok := answers[ask]; ok {
