@@ -70,7 +70,7 @@ func (st *State) PastExpenses(userID int64, start time.Time, end *time.Time) (sa
 					AND r.user_id = %d
 			), 0) as effect
 		FROM (
-			SELECT DATETIME(monthDate, 'start of month') as startDate,
+			SELECT DATETIME(monthDate, 'start of month', '-1 second') as startDate,
 				DATETIME(monthDate, 'start of month', '+1 month', '-1 second') as endDate
 			FROM MonthDates
 		) AS months
