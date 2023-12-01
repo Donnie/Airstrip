@@ -53,7 +53,7 @@ func (st *State) PastExpenses(userID int64, start time.Time, end *time.Time) (sa
 			WHERE DATETIME(monthDate, '+1 month') < DATETIME('%s 23:59:59')
 		)
 		SELECT
-			startDate as month,
+			DATETIME(startDate, '+1 second') as month,
 			COALESCE((
 				SELECT 
 					SUM(

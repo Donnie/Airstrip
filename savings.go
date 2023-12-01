@@ -71,7 +71,7 @@ func (st *State) PastSavings(userID int64, start time.Time, end *time.Time) (sav
 			WHERE DATETIME(monthDate, '+1 month') < DATETIME('%s 23:59:59')
 		)
 		SELECT
-			startDate as month,
+			DATETIME(startDate, '+1 second') as month,
 			COALESCE((
 				SELECT
 					SUM(
